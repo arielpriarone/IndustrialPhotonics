@@ -4,7 +4,9 @@ import matplotlib.colors as color
 import numpy as np
 import matplotlib
 import tikzplotlib
+import scipy.integrate as integrate
 matplotlib.use('Qt5Agg')
+
 
 def tikzplotlib_fix_ncols(obj):
     """
@@ -3391,17 +3393,20 @@ n_SiO2  = 1.4626            # at 495 nm
 d_SiO2=lambda0/4/n_SiO2     # optimized for lambda0
 
 lambdas=np.logspace(np.log10(300),np.log10(2500),200) # 200 points in the region of interest
-
+lambdas=AM15_lambda # use the AM15 vector already present
 
 # check reflectivity - ideal
 fig, axs=plt.subplots()
 fig.tight_layout()
-for n_ar in [n_ideal,n_Al2O3,n_Si3N4,n_SiO2,n_TiO2]:
+for n_ar, d in zip([n_ideal,n_Al2O3,n_Si3N4,n_SiO2,n_TiO2], [d_ideal,d_Al2O3,d_Si3N4,d_SiO2,d_TiO2]):
+    print(n_ar,d)
     Z0=120*np.pi                # free space inpedance
     Z_inf_ar=Z0/n_ar            # impedence of ARC
     Z_inf_Si=Z0/n_si            # impedence of bulk silicon
     Gbminus=(Z_inf_Si-Z_inf_ar)/(Z_inf_Si+Z_inf_ar) # reflection coefficient
-    Gaplus=(Gbminus*np.exp(1j*np.pi*lambda0/lambdas))
+    K0=2*np.pi/lambdas
+    k=K0*n_ar
+    Gaplus=(Gbminus*np.exp(-2j*k*d))
     Za=Z_inf_ar*(1+Gaplus)/(1-Gaplus)
     Gaminus=(Za-Z0)/(Za+Z0)
     R_vect=np.abs(Gaminus)**2*100
@@ -3412,44 +3417,47 @@ axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Reflectivity [%]')
 axs.grid(True,'both')
 axs.minorticks_on()
-axs.legend(['ideal n=1.9493', 'Al2O3 n=1.7747', 'Si3N4 n=2.0647', 'SiO2 n=1.4626', 'TiO2 n=2.7193'])
+axs.legend(['ideal $n=1.9493$', '$Al_2O_3 \, n=1.7747$', '$Si_3N_4 \, n=2.0647$', '$SiO_2 \, n=1.4626$', '$TiO_2 \, n=2.7193$'])
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('SLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
-# %% compute the reflectivity 
-lambda0=495 # design wavelength [nm]
-n_ideal=np.sqrt(n_air*n_si) # ideal refractive index at lambda0
-d_ideal=lambda0/4/n_ideal # ideal thickness
-n_TiO2= 2.7193              # at 495 nm
-d_TiO2= lambda0/4/n_TiO2    # optimized for lambda0
-n_Si3N4 = 2.0647            # at 495 nm
-d_Si3N4=lambda0/4/n_Si3N4   # optimized for lambda0
-n_Al2O3 = 1.7747            # at 495 nm
-d_Al2O3=lambda0/4/n_Al2O3   # optimized for lambda0
-n_SiO2  = 1.4626            # at 495 nm
-d_SiO2=lambda0/4/n_SiO2     # optimized for lambda0
-
-lambdas=np.logspace(np.log10(300),np.log10(2500),200) # 200 points in the region of interest
+# %% compute the chromatic dispersion
 
 n_ideal_v=n_ideal*lambdas/lambdas # ideal refractive index at lambda0
-n_TiO2_v= (5.913+0.2441/(lambdas**2-0.0803))**.5             # at every lambda 
-n_Si3N4_v = (1+3.0249/(1-(0.1353406/lambdas)**2)+40314/(1-(1239.842/lambdas)**2))**.5            # at every lambda
-n_Al2O3_v = (1+1.4313493/(1-(0.0726631/lambdas)**2)+0.65054713/(1-(0.1193242/lambdas)**2)+5.3414021/(1-(18.028251/lambdas)**2))**.5            # at every lambda
-n_SiO2_v  = (1+0.6961663/(1-(0.0684043/lambdas)**2)+0.4079426/(1-(0.1162414/lambdas)**2)+0.8974794/(1-(9.896161/lambdas)**2))**.5            # at every lambda
+lambdas_um=lambdas/1000
+n_TiO2_v = (4.99+1/96.6*lambdas_um**(-1.1)+1/4.6*lambdas_um**(-1.95))**.5             # at every lambda 
+n_Si3N4_v = (1+3.0249/(1-(0.1353406/lambdas_um)**2)+40314/(1-(1239.842/lambdas_um)**2))**.5            # at every lambda
+n_Al2O3_v = (1+1.4313493/(1-(0.0726631/lambdas_um)**2)+0.65054713/(1-(0.1193242/lambdas_um)**2)+5.3414021/(1-(18.028251/lambdas_um)**2))**.5            # at every lambda
+n_SiO2_v  = (1+0.6961663/(1-(0.0684043/lambdas_um)**2)+0.4079426/(1-(0.1162414/lambdas_um)**2)+0.8974794/(1-(9.896161/lambdas_um)**2))**.5            # at every lambda
 
-# check reflectivity - ideal
 fig, axs=plt.subplots()
 fig.tight_layout()
 for n_ar in [n_ideal_v,n_Al2O3_v,n_Si3N4_v,n_SiO2_v,n_TiO2_v]:
+    axs.plot(lambdas,n_ar)
+axs.set_xlabel('$\lambda$ [nm]')
+axs.set_ylabel('$n$')
+axs.grid(True,'both')
+axs.minorticks_on()
+axs.legend(['ideal', '$Al_2O_3$', '$Si_3N_4$', '$SiO_2$', '$TiO_2$'])
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('n_dispersion.tex',axis_width='0.9\\textwidth',axis_height ='5cm')
+
+# %% check reflectivity - with dispersion
+fig, axs=plt.subplots()
+fig.tight_layout()
+for n_ar, d in zip([n_ideal_v,n_Al2O3_v,n_Si3N4_v,n_SiO2_v,n_TiO2_v], [d_ideal,d_Al2O3,d_Si3N4,d_SiO2,d_TiO2]):
     Z0=120*np.pi                # free space inpedance
     Z_inf_ar=Z0/n_ar            # impedence of ARC
     Z_inf_Si=Z0/n_si            # impedence of bulk silicon
     Gbminus=(Z_inf_Si-Z_inf_ar)/(Z_inf_Si+Z_inf_ar) # reflection coefficient
-    Gaplus=(Gbminus*np.exp(1j*np.pi*lambda0/lambdas))
+    k=K0*n_ar
+    Gaplus=(Gbminus*np.exp(-2j*k*d))
     Za=Z_inf_ar*(1+Gaplus)/(1-Gaplus)
     Gaminus=(Za-Z0)/(Za+Z0)
     R_vect=np.abs(Gaminus)**2*100
+    if n_ar is n_Si3N4_v:
+        R_SLARC=R_vect #save the best design
     axs.plot(lambdas,R_vect)
 
 
@@ -3457,12 +3465,133 @@ axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Reflectivity [%]')
 axs.grid(True,'both')
 axs.minorticks_on()
-axs.legend(['ideal', 'Al2O3', 'Si3N4', 'SiO2', 'TiO2'])
+axs.legend(['ideal', '$Al_2O_3$', '$Si_3N_4$', '$SiO_2$', '$TiO_2$'])
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('SLARC_n_vary.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %%
+n_air/n_si
+
+n_dict={"$Na_3AlF_6$": 1.35,
+        "$MgF_2$": 1.38,
+        "$SiO_2$": 1.46,
+        "$Al_2O_3$": 1.629,
+        "$CeF_3$": 1.63,
+        "$PbF_2$": 1.73,
+        "$Ta_2O_5$": 2.126,
+        "$ZrO_2$": 2.20,
+        "$ZnS$": 2.32,
+        "$TiO_2$": 2.40,
+        "$Bi_2O_3$": 2.45,
+        "$Ge$": 4.2,
+        "$Te$": 4.60}
+
+legend=[]
+val=[]
+for keys_e, values_e in n_dict.items():
+    for keys_i, values_i in n_dict.items():
+        val.append(values_e/values_i)
+        legend.append(keys_e + "//" + keys_i)
+
 fig, axs=plt.subplots()
 fig.tight_layout()
-axs.plot(n_TiO2_v)
+axs.plot(legend,val,'x')
+axs.hlines([(n_air/n_si)**0.5],legend[0],legend[-1],'red')
+axs.set_xlabel('Combination of materials')
+axs.set_ylabel('$n_1/n_2$')
+axs.grid(True,'both')
+axs.legend(['available ratios', 'reference'])
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('DLARC_ratios.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+# %% DLARC - my design
+d_Ge=lambda0/4/n_dict['$Ge$']
+d_Ta=lambda0/4/n_dict['$Ta_2O_5$']
+Z_inf_Ge=Z0/n_dict['$Ge$']
+Z_inf_Ta=Z0/n_dict['$Ta_2O_5$']
+Gcminus=(Z_inf_Si-Z_inf_Ge)/(Z_inf_Si+Z_inf_Ge)
+k=K0*n_dict['$Ge$']
+Gbplus=Gcminus*np.exp(-2j*k*d_Ge)
+Zb=Z_inf_Ge*(1+Gbplus)/(1-Gbplus)
+Gbminus=(Zb-Z_inf_Ta)/(Zb+Z_inf_Ta)
+k=K0*n_dict['$Ta_2O_5$']
+Gaplus=Gbminus*np.exp(-2j*k*d_Ta)
+Za=Z_inf_Ta*(1+Gaplus)/(1-Gaplus)
+Gaminus=(Za-Z0)/(Za+Z0)
+R_DLARC_Ta2O5Ge=np.abs(Gaminus)**2*100
+
+# %% DLARC - SILICA/TITANIA
+Z_inf_SiO2=Z0/n_dict['$SiO_2$']
+Z_inf_TiO2=Z0/n_dict['$TiO_2$']
+Gcminus=(Z_inf_Si-Z_inf_TiO2)/(Z_inf_Si+Z_inf_TiO2)
+k=K0*n_dict['$TiO_2$']
+Gbplus=Gcminus*np.exp(-2j*k*d_TiO2)
+Zb=Z_inf_TiO2*(1+Gbplus)/(1-Gbplus)
+Gbminus=(Zb-Z_inf_SiO2)/(Zb+Z_inf_SiO2)
+k=K0*n_dict['$SiO_2$']
+Gaplus=Gbminus*np.exp(-2j*k*d_SiO2)
+Za=Z_inf_SiO2*(1+Gaplus)/(1-Gaplus)
+Gaminus=(Za-Z0)/(Za+Z0)
+R_DLARC_SiO2TiO2=np.abs(Gaminus)**2*100
+
+
+# check reflectivity - DLARC
+fig, axs=plt.subplots()
+fig.tight_layout()
+axs.plot(lambdas,R_DLARC_SiO2TiO2)
+axs.plot(lambdas,R_DLARC_Ta2O5Ge)
+axs.plot(lambdas,R_SLARC)
+
+axs.set_xlabel('$\lambda$ [nm]')
+axs.set_ylabel('Reflectivity [%]')
+axs.grid(True,'both')
+axs.minorticks_on()
+axs.legend(['DLARC $TiO2 \,/\, SiO2$','DLARC $Ta_2O_5 \,/\, Ge$','SLARC $Si_3N_4$'])
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('DLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+# %% check effective reflectivity7
+indx=0
+R_eff=[]
+for R in [R_DLARC_SiO2TiO2, R_DLARC_Ta2O5Ge, R_SLARC]:
+    NUM=0
+    DEN=0
+    for _ in lambdas:
+        if indx is (len(lambdas)-2):
+            break
+        NUM+=R[indx]*AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+        DEN+=AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+    R_eff.append(NUM/DEN)
+
+
+# %% DLARC - tolerance effect
+Z_inf_SiO2=Z0/n_dict['$SiO_2$']
+Z_inf_TiO2=Z0/n_dict['$TiO_2$']
+Gcminus=(Z_inf_Si-Z_inf_TiO2)/(Z_inf_Si+Z_inf_TiO2)
+k=K0*n_dict['$TiO_2$']
+
+fig, axs=plt.subplots()
+fig.tight_layout()
+legend=[]
+for err1 in [-0.02, 0.02]:
+    for err2 in [-0.02, 0.02]:
+        Gbplus=Gcminus*np.exp(-2j*k*d_TiO2*(1-err1))
+        Zb=Z_inf_TiO2*(1+Gbplus)/(1-Gbplus)
+        Gbminus=(Zb-Z_inf_SiO2)/(Zb+Z_inf_SiO2)
+        k=K0*n_dict['$SiO_2$']
+        Gaplus=Gbminus*np.exp(-2j*k*d_SiO2*(1-err2))
+        Za=Z_inf_SiO2*(1+Gaplus)/(1-Gaplus)
+        Gaminus=(Za-Z0)/(Za+Z0)
+        R_DLARC_tolerance=np.abs(Gaminus)**2*100
+        axs.plot(lambdas,R_DLARC_tolerance)
+        legend.append('TiO_2 ('+str(err1)+'%), SiO_2 ('+str(err2)+'%)')
+axs.minorticks_on()
+axs.set_xlabel('$\lambda$ [nm]')
+axs.set_ylabel('Reflectivity [%]')
+axs.grid(True,'both')
+axs.legend(legend,loc='lower right')
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('DLARC_tol.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+# %%
 plt.show()
