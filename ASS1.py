@@ -3550,7 +3550,20 @@ axs.legend(['DLARC $TiO2 \,/\, SiO2$','DLARC $Ta_2O_5 \,/\, Ge$','SLARC $Si_3N_4
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('DLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
-# %% check effective reflectivity7
+# %% check effective reflectivity
+indx=0
+R_eff=[]
+for R in [R_DLARC_SiO2TiO2, R_DLARC_Ta2O5Ge, R_SLARC]:
+    NUM=0
+    DEN=0
+    for _ in lambdas:
+        if indx is (len(lambdas)-2):
+            break
+        NUM+=R[indx]*AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+        DEN+=AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+    R_eff.append(NUM/DEN)
+
+# %% check effective reflectivity in range of PV
 indx=0
 R_eff=[]
 for R in [R_DLARC_SiO2TiO2, R_DLARC_Ta2O5Ge, R_SLARC]:
@@ -3584,7 +3597,9 @@ for err1 in [-0.02, 0.02]:
         Gaminus=(Za-Z0)/(Za+Z0)
         R_DLARC_tolerance=np.abs(Gaminus)**2*100
         axs.plot(lambdas,R_DLARC_tolerance)
-        legend.append('TiO_2 ('+str(err1)+'%), SiO_2 ('+str(err2)+'%)')
+        legend.append('$TiO_2$ ('+str(err1)+'%), $SiO_2$ ('+str(err2)+'%)')
+axs.plot(lambdas,R_DLARC_SiO2TiO2)
+legend.append('$TiO_2$, $SiO_2$ nominal tickness')
 axs.minorticks_on()
 axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Reflectivity [%]')
