@@ -32,6 +32,23 @@ def isNotebook() -> bool:
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
 
+
+# %% compute the reflectivity 
+n_si=3.8    # refraction coefficient of silicon
+n_air=1     # refraction coefficient of air
+
+R=((n_air-n_si)/(n_air+n_si))**2    # Normal incidence
+R
+
+theta=30/360*2*np.pi                # Angle of incidence, in radiants
+R_tm=((n_air*np.sqrt(n_si**2-n_air**2*np.sin(theta)**2)-n_si**2*np.cos(theta))/
+        (n_air*np.sqrt(n_si**2-n_air**2*np.sin(theta)**2)+n_si**2*np.cos(theta)))**2
+R_te=((n_air*np.cos(theta)-np.sqrt(n_si**2-n_air**2*np.sin(theta)**2))/(n_air*np.cos(theta)+np.sqrt(n_si**2-n_air**2*np.sin(theta)**2)))**2
+R_mean=np.mean([R_te,R_tm])
+print(R_te)
+print(R_tm)
+print(R_mean)
+
 # %% Sun tipical irradiance
 AM15_lambda=np.array([300,      # wavelength
 300.5,
@@ -3366,20 +3383,7 @@ axs.set_ylabel('Irradiance [${W}/{(m^2\cdot nm)}$]')
 axs.grid(True,'both')
 tikzplotlib.save('irradiance.tex',axis_width='0.9\\textwidth',axis_height ='6cm')
 
-# %% compute the reflectivity 
-n_si=3.8    # refraction coefficient of silicon
-n_air=1     # refraction coefficient of air
-
-R=((n_air-n_si)/(n_air+n_si))**2    # Normal incidence
-R
-
-theta=30/360*2*np.pi                # Angle of incidence, in radiants
-R_tm=((n_air*np.sqrt(n_si**2-n_air**2*np.sin(theta)**2)-n_si**2*np.cos(theta))/
-        (n_air*np.sqrt(n_si**2-n_air**2*np.sin(theta)**2)+n_si**2*np.cos(theta)))**2
-R_te=((n_air*np.cos(theta)-np.sqrt(n_si**2-n_air**2*np.sin(theta)**2))/(n_air*np.cos(theta)+np.sqrt(n_si**2-n_air**2*np.sin(theta)**2)))**2
-R_mean=np.mean([R_te,R_tm])
-
-# %% compute the reflectivity 
+# %% sLARC design
 lambda0=495 # design wavelength [nm]
 n_ideal=np.sqrt(n_air*n_si) # ideal refractive index at lambda0
 d_ideal=lambda0/4/n_ideal # ideal thickness
@@ -3395,7 +3399,7 @@ d_SiO2=lambda0/4/n_SiO2     # optimized for lambda0
 lambdas=np.logspace(np.log10(300),np.log10(2500),200) # 200 points in the region of interest
 lambdas=AM15_lambda # use the AM15 vector already present
 
-# check reflectivity - ideal
+# %% check reflectivity - no cromatic dispersion
 fig, axs=plt.subplots()
 fig.tight_layout()
 for n_ar, d in zip([n_ideal,n_Al2O3,n_Si3N4,n_SiO2,n_TiO2], [d_ideal,d_Al2O3,d_Si3N4,d_SiO2,d_TiO2]):
@@ -3469,9 +3473,7 @@ axs.legend(['ideal', '$Al_2O_3$', '$Si_3N_4$', '$SiO_2$', '$TiO_2$'])
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('SLARC_n_vary.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
-# %%
-n_air/n_si
-
+# %% DL ARC - some n
 n_dict={"$Na_3AlF_6$": 1.35,
         "$MgF_2$": 1.38,
         "$SiO_2$": 1.46,
@@ -3486,6 +3488,22 @@ n_dict={"$Na_3AlF_6$": 1.35,
         "$Ge$": 4.2,
         "$Te$": 4.60}
 
+
+# %% DLARC - SILICA/TITANIA
+Z_inf_SiO2=Z0/n_SiO2
+Z_inf_TiO2=Z0/n_TiO2
+Gcminus=(Z_inf_Si-Z_inf_TiO2)/(Z_inf_Si+Z_inf_TiO2)
+k=K0*n_dict['$TiO_2$']
+Gbplus=Gcminus*np.exp(-2j*k*d_TiO2)
+Zb=Z_inf_TiO2*(1+Gbplus)/(1-Gbplus)
+Gbminus=(Zb-Z_inf_SiO2)/(Zb+Z_inf_SiO2)
+k=K0*n_dict['$SiO_2$']
+Gaplus=Gbminus*np.exp(-2j*k*d_SiO2)
+Za=Z_inf_SiO2*(1+Gaplus)/(1-Gaplus)
+Gaminus=(Za-Z0)/(Za+Z0)
+R_DLARC_SiO2TiO2=np.abs(Gaminus)**2*100
+
+# %% DL ARC - my design
 legend=[]
 val=[]
 for keys_e, values_e in n_dict.items():
@@ -3520,27 +3538,15 @@ Za=Z_inf_Ta*(1+Gaplus)/(1-Gaplus)
 Gaminus=(Za-Z0)/(Za+Z0)
 R_DLARC_Ta2O5Ge=np.abs(Gaminus)**2*100
 
-# %% DLARC - SILICA/TITANIA
-Z_inf_SiO2=Z0/n_dict['$SiO_2$']
-Z_inf_TiO2=Z0/n_dict['$TiO_2$']
-Gcminus=(Z_inf_Si-Z_inf_TiO2)/(Z_inf_Si+Z_inf_TiO2)
-k=K0*n_dict['$TiO_2$']
-Gbplus=Gcminus*np.exp(-2j*k*d_TiO2)
-Zb=Z_inf_TiO2*(1+Gbplus)/(1-Gbplus)
-Gbminus=(Zb-Z_inf_SiO2)/(Zb+Z_inf_SiO2)
-k=K0*n_dict['$SiO_2$']
-Gaplus=Gbminus*np.exp(-2j*k*d_SiO2)
-Za=Z_inf_SiO2*(1+Gaplus)/(1-Gaplus)
-Gaminus=(Za-Z0)/(Za+Z0)
-R_DLARC_SiO2TiO2=np.abs(Gaminus)**2*100
 
 
-# check reflectivity - DLARC
+
+# %% check reflectivity - SLARC / DLARCs
 fig, axs=plt.subplots()
 fig.tight_layout()
-axs.plot(lambdas,R_DLARC_SiO2TiO2)
-axs.plot(lambdas,R_DLARC_Ta2O5Ge)
-axs.plot(lambdas,R_SLARC)
+axs.semilogy(lambdas,R_DLARC_SiO2TiO2)
+axs.semilogy(lambdas,R_DLARC_Ta2O5Ge)
+axs.semilogy(lambdas,R_SLARC)
 
 axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Reflectivity [%]')
@@ -3561,7 +3567,7 @@ for R in [R_DLARC_SiO2TiO2, R_DLARC_Ta2O5Ge, R_SLARC]:
             break
         NUM+=R[indx]*AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
         DEN+=AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
-    R_eff.append(NUM/DEN)
+    R_eff.append(NUM/DEN); print(R_eff)
 
 # %% check effective reflectivity in range of PV
 indx=0
@@ -3569,12 +3575,13 @@ R_eff=[]
 for R in [R_DLARC_SiO2TiO2, R_DLARC_Ta2O5Ge, R_SLARC]:
     NUM=0
     DEN=0
-    for _ in lambdas:
+    for lam in lambdas:
         if indx is (len(lambdas)-2):
             break
-        NUM+=R[indx]*AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
-        DEN+=AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
-    R_eff.append(NUM/DEN)
+        if 400 <= lam <= 1100:
+           NUM+=R[indx]*AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+           DEN+=AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+    R_eff.append(NUM/DEN); print(R_eff)
 
 
 # %% DLARC - tolerance effect
