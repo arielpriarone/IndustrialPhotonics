@@ -47,7 +47,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
     q0      =   1j*zr0                          # complex beam parameter
     th0     =   lam0/np.pi/w0                   # divergence at the left of the first lens
     
-    M1      =   f1/((d0-f1)**2+zr0**2)**0.5     # magnification first lens
+    M1      =   -f1/((d0-f1)**2+zr0**2)**0.5    # magnification first lens (- to keep it positive)
     w1      =   M1*w0                           # weist of second beam
     zr1     =   zr0*M1**2                       # Rayleigh range right first lens
     th1     =   th0/M1                          # Divergence right first lens
@@ -55,7 +55,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
     A,B,C,D =   (1,0,-1/f1,1)                   # matrix entries of first lens
     q1plus  =   (A*q1minus+B)/(C*q1minus+D)     # propagate right side first lens
     
-    M2      =   f2/((d0-f2)**2+zr1**2)**0.5     # magnification second lens
+    dp      =   (d1-(f1+M1**2*(d0-f1)))         # from left beam waist to second lens (slide 125)
+    M2      =   f2/((dp-f2)**2+zr1**2)**0.5     # magnification second lens
     w2      =   M2*w1                           # weist of third beam
     zr2     =   zr1*M2**2                       # Rayleigh range right second lens
     th2     =   th1/M2                          # Divergence right second lens
@@ -63,6 +64,11 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
     A,B,C,D =   (1,0,-1/f2,1)                   # matrix entries of second lens
     q2plus  =   (A*q2minus+B)/(C*q2minus+D)     # propagate right side second lens
     
+    dp      =   (d2-(f2+M2**2*(d1-f2)))         # from left beam waist to second lens
+    M3      =   f3/((d0-f3)**2+zr2**2)**0.5     # magnification second lens
+    w3      =   M3*w2                           # weist of third beam
+    zr3     =   zr2*M3**2                       # Rayleigh range right second lens
+    th3     =   th2/M3                          # Divergence right second lens
     q3minus =   q2plus+d2                       # propagate left side third lens
     A,B,C,D =   (1,0,-1/f3,1)                   # matrix entries of third lens
     q3plus  =   (A*q3minus+B)/(C*q3minus+D)     # propagate right side third lens
@@ -94,9 +100,9 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
     axs.set_xlabel('$z$ [mm]')
     axs.set_ylabel('beam diameter [mm]')
     axs.grid(True,'both'); axs.set_ylim([ymin,ymax])
-    #axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta")
-    #plt.show()
-    print(th0); print(w0);print(th1); print(w1)
+    axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta")
+    plt.show()
+    print(M1);print(M2);print(M3);print(th0); print(w0);print(th1); print(w1);print(th2); print(w2);print(th3); print(w3)
     
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
