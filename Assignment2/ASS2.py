@@ -7,7 +7,6 @@ import tikzplotlib
 import scipy.integrate as integrate
 matplotlib.use('Qt5Agg')
 
-
 def tikzplotlib_fix_ncols(obj):
     """
     workaround for matplotlib 3.6 renamed legend's _ncol to _ncols, which breaks tikzplotlib
@@ -30,7 +29,7 @@ def isNotebook() -> bool:
         return False      # Probably standard Python interpreter
 
 #  Function for plotting the beam diameter
-def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
+def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the diameter and show a plot
     # lam0      wavelength considered                           [mm]
     # w0        initial beam waist                              [mm]
@@ -64,8 +63,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
     A,B,C,D =   (1,0,-1/f2,1)                   # matrix entries of second lens
     q2plus  =   (A*q2minus+B)/(C*q2minus+D)     # propagate right side second lens
     
-    dp      =   (d2-(f2+M2**2*(d1-f2)))         # from left beam waist to second lens
-    M3      =   f3/((d0-f3)**2+zr2**2)**0.5     # magnification second lens
+    dp      =   (d2-(f2+M2**2*(dp-f2)))         # from left beam waist to third lens
+    M3      =   f3/((dp-f3)**2+zr2**2)**0.5     # magnification third lens
     w3      =   M3*w2                           # weist of third beam
     zr3     =   zr2*M3**2                       # Rayleigh range right second lens
     th3     =   th2/M3                          # Divergence right second lens
@@ -75,6 +74,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
     z_vect  =   np.linspace(0,L2+2*f3,npoint)   # points of z axis
     w       =   []                              # initialize beam diameter along z
 
+    d3      =   f3+M3**2*(dp-f3)                # location of output waist w.r.t. last lens (if negative diverges already from lens position)
+    
     for z in z_vect:
         if      0<=z<d0:
             q   = q0+(z-0)                      # propagate q to z position
@@ -92,22 +93,40 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint):
             q   = q3plus+(z-L2)                 # propagate q to z position
             aux = 1/q                           # auxilliary for diameter calculation
             w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
-    ymax=max(w)*1.1
-    ymin=-0
-    fig, axs=plt.subplots()
+    ymax=max(w)*1.1;    ymin=-0
+    xmin=0.75*d0; xmax=L2+2*f3
+    if fig == None or axs == None:
+        fig, axs=plt.subplots()
     fig.tight_layout()
-    axs.plot(z_vect,w)
+    axs.plot(z_vect,w,label=f'd1={d1}; d2={d2}')
     axs.set_xlabel('$z$ [mm]')
     axs.set_ylabel('beam diameter [mm]')
-    axs.grid(True,'both'); axs.set_ylim([ymin,ymax])
-    axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta")
-    plt.show()
-    print(M1);print(M2);print(M3);print(th0); print(w0);print(th1); print(w1);print(th2); print(w2);print(th3); print(w3)
-    
+    axs.set_ylim([ymin,ymax]); axs.set_xlim([xmin,xmax])
+    axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta",linewidths=0.9)
+    axs.grid(True, 'major')
+    axs.legend()
+    return fig, axs, M1*M2*M3, d3, th3*10**5, w3
+        
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
 
-# %% second row of the table
-BeamExpander(0.0006328,0.5,100,20,115.002,-10,10,100,500000)
+# %% check result for all the row of the table
+table=[(10,120.006),
+       (20,115.002),
+       (30,113.334),
+       (40,112.500),
+       (50,112.000)]
+fig, ax = plt.subplots()
+for (d1,d2) in table:
+    fig, ax, Mg, dout, thout, wout = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,npoint=1000,fig=fig,axs=ax)
+    print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment2/PLOT.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+plt.show()
 
+# %% check linearity
+for d1 in np.linspace(5,100,50):
+    for d2 in np.linspace(130,100,50):
+        _, _, Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100)
+    
