@@ -29,7 +29,7 @@ def isNotebook() -> bool:
         return False      # Probably standard Python interpreter
 
 #  Function for plotting the beam diameter
-def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None):
+def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the diameter and show a plot
     # lam0      wavelength considered                           [mm]
     # w0        initial beam waist                              [mm]
@@ -40,6 +40,9 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None):
     # f2        focal length first lens                         [mm]
     # f3        focal length first lens                         [mm]
     # npoint    number of points of the plot (resolution)       [--]
+    # fig=None  figure handle
+    # axs=None  axis handle
+    # plot=True T=generate plot; F=generate only the data
     L1      =   d0+d1                           # second length position
     L2      =   d0+d1+d2                        # third length position
     zr0     =   np.pi*w0**2/lam0                # Rayleigh range
@@ -75,36 +78,36 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None):
     w       =   []                              # initialize beam diameter along z
 
     d3      =   f3+M3**2*(dp-f3)                # location of output waist w.r.t. last lens (if negative diverges already from lens position)
-    
-    for z in z_vect:
-        if      0<=z<d0:
-            q   = q0+(z-0)                      # propagate q to z position
-            aux = 1/q                           # auxilliary for diameter calculation
-            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
-        elif    d0<=z<L1:
-            q   = q1plus+(z-d0)                 # propagate q to z position
-            aux = 1/q                           # auxilliary for diameter calculation
-            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
-        elif    L1<=z<L2:
-            q   = q2plus+(z-L1)                 # propagate q to z position
-            aux = 1/q                           # auxilliary for diameter calculation
-            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
-        elif    L2<=z:
-            q   = q3plus+(z-L2)                 # propagate q to z position
-            aux = 1/q                           # auxilliary for diameter calculation
-            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
-    ymax=max(w)*1.1;    ymin=-0
-    xmin=0.75*d0; xmax=L2+2*f3
-    if fig == None or axs == None:
-        fig, axs=plt.subplots()
-    fig.tight_layout()
-    axs.plot(z_vect,w,label=f'd1={d1}; d2={d2}')
-    axs.set_xlabel('$z$ [mm]')
-    axs.set_ylabel('beam diameter [mm]')
-    axs.set_ylim([ymin,ymax]); axs.set_xlim([xmin,xmax])
-    axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta",linewidths=0.9)
-    axs.grid(True, 'major')
-    axs.legend()
+    if plot:                                    # plot if needed, skip if not
+        for z in z_vect:
+            if      0<=z<d0:
+                q   = q0+(z-0)                  # propagate q to z position
+                aux = 1/q                       # auxilliary for diameter calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+            elif    d0<=z<L1:
+                q   = q1plus+(z-d0)             # propagate q to z position
+                aux = 1/q                       # auxilliary for diameter calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+            elif    L1<=z<L2:
+                q   = q2plus+(z-L1)             # propagate q to z position
+                aux = 1/q                       # auxilliary for diameter calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+            elif    L2<=z:
+                q   = q3plus+(z-L2)             # propagate q to z position
+                aux = 1/q                       # auxilliary for diameter calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+        ymax=max(w)*1.1;    ymin=-0
+        xmin=0.75*d0; xmax=L2+2*f3
+        if fig == None or axs == None:
+            fig, axs=plt.subplots()
+        fig.tight_layout()
+        axs.plot(z_vect,w,label=f'd1={d1}; d2={d2}')
+        axs.set_xlabel('$z$ [mm]')
+        axs.set_ylabel('beam diameter [mm]')
+        axs.set_ylim([ymin,ymax]); axs.set_xlim([xmin,xmax])
+        axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta",linewidths=0.9)
+        axs.grid(True, 'major')
+        axs.legend()
     return fig, axs, M1*M2*M3, d3, th3*10**5, w3
         
 if isNotebook(): # run widget only if in interactive mode
@@ -123,10 +126,24 @@ for (d1,d2) in table:
 
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment2/PLOT.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
-plt.show()
+
 
 # %% check linearity
-for d1 in np.linspace(5,100,50):
-    for d2 in np.linspace(130,100,50):
-        _, _, Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100)
+LinRel = [[],[]]    
+fig, axs=plt.subplots()
+fig.tight_layout()
+
+for d1 in np.linspace(10,50,100):
+    for d2 in np.linspace(120,112,100):
+        Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[2]
+        LinRel[0].append(d1)
+        LinRel[1].append(Mg)      
     
+axs.scatter(LinRel[0],LinRel[1],marker='.')
+axs.set_xlabel('$d_1$ [mm]')
+axs.set_ylabel('Magnification [-]')
+axs.grid(True, 'Both')
+axs.legend()
+
+plt.show()
+# %%
