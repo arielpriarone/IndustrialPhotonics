@@ -28,9 +28,9 @@ def isNotebook() -> bool:
     except NameError:
         return False      # Probably standard Python interpreter
 
-#  Function for plotting the beam diameter
+#  Function for plotting the beam radius
 def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True):
-    # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the diameter and show a plot
+    # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
     # lam0      wavelength considered                           [mm]
     # w0        initial beam waist                              [mm]
     # d0        from initial waist to first thin lens           [mm]
@@ -75,37 +75,37 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     A,B,C,D =   (1,0,-1/f3,1)                   # matrix entries of third lens
     q3plus  =   (A*q3minus+B)/(C*q3minus+D)     # propagate right side third lens
     z_vect  =   np.linspace(0,L2+2*f3,npoint)   # points of z axis
-    w       =   []                              # initialize beam diameter along z
+    w       =   []                              # initialize beam radius along z
 
     d3      =   f3+M3**2*(dp-f3)                # location of output waist w.r.t. last lens (if negative diverges already from lens position)
     if plot:                                    # plot if needed, skip if not
         for z in z_vect:
             if      0<=z<d0:
                 q   = q0+(z-0)                  # propagate q to z position
-                aux = 1/q                       # auxilliary for diameter calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+                aux = 1/q                       # auxilliary for radius calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
             elif    d0<=z<L1:
                 q   = q1plus+(z-d0)             # propagate q to z position
-                aux = 1/q                       # auxilliary for diameter calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+                aux = 1/q                       # auxilliary for radius calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
             elif    L1<=z<L2:
                 q   = q2plus+(z-L1)             # propagate q to z position
-                aux = 1/q                       # auxilliary for diameter calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+                aux = 1/q                       # auxilliary for radius calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
             elif    L2<=z:
                 q   = q3plus+(z-L2)             # propagate q to z position
-                aux = 1/q                       # auxilliary for diameter calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam diameter along z axis
+                aux = 1/q                       # auxilliary for radius calculation
+                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
         ymax=max(w)*1.1;    ymin=-0
         xmin=0.75*d0; xmax=L2+2*f3
         if fig == None or axs == None:
             fig, axs=plt.subplots()
         fig.tight_layout()
-        axs.plot(z_vect,w,label=f'd1={d1}; d2={d2}')
+        axs.plot(z_vect,w,label=f'$d_1={d1}$; $d_2={d2}$')
         axs.set_xlabel('$z$ [mm]')
-        axs.set_ylabel('beam diameter [mm]')
+        axs.set_ylabel('beam radius [mm]')
         axs.set_ylim([ymin,ymax]); axs.set_xlim([xmin,xmax])
-        axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta",linewidths=0.9)
+        axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta")
         axs.grid(True, 'major')
         axs.legend()
     return fig, axs, M1*M2*M3, d3, th3*10**5, w3
@@ -127,23 +127,83 @@ for (d1,d2) in table:
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment2/PLOT.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
-
 # %% check linearity
-LinRel = [[],[]]    
+   
 fig, axs=plt.subplots()
 fig.tight_layout()
+Mg_vect=[]
+d2      =   112.5                       # note that this is optimized for 40x !!!
+d1_vect =   np.linspace(38,42,500)     # try some d1
+for d1 in d1_vect:
+    Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[2]
+    Mg_vect.append(Mg)
+axs.plot(d1_vect,Mg_vect,label=f'$d_2={round(d2,3)}$')
 
-for d1 in np.linspace(10,50,100):
-    for d2 in np.linspace(120,112,100):
-        Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[2]
-        LinRel[0].append(d1)
-        LinRel[1].append(Mg)      
-    
-axs.scatter(LinRel[0],LinRel[1],marker='.')
 axs.set_xlabel('$d_1$ [mm]')
 axs.set_ylabel('Magnification [-]')
 axs.grid(True, 'Both')
 axs.legend()
 
-plt.show()
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment2/dvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+
+# %% check linearity
+   
+fig, axs=plt.subplots()
+fig.tight_layout()
+maximum=[]
+d_max=[]
+for d2 in np.linspace(120,112,11):
+    LinRel = [[],[]] 
+    for d1 in np.linspace(10,50,600):
+        Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[2]
+        LinRel[0].append(d1)
+        LinRel[1].append(Mg)
+    maximum.append(max(LinRel[1]))
+    maxindex=LinRel[1].index(max(LinRel[1]))
+    d_max.append(LinRel[0][maxindex])
+    axs.scatter(LinRel[0],LinRel[1],marker='.',label=f'$d_2={round(d2,3)}$')
+axs.plot(d_max,maximum,'k',label=f'peack values')
+
+
+axs.set_xlabel('$d_1$ [mm]')
+axs.set_ylabel('Magnification [-]')
+axs.grid(True, 'Both')
+axs.legend(ncol=4)
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment2/LinApprox.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+# %% check result for all the row of the table
+table=[(10,120.006),
+       (20,115.002),
+       (30,113.334),
+       (40,112.500),
+       (50,112.000)]
+fig, ax = plt.subplots()
+for (d1,d2) in table:
+    fig, ax, Mg, dout, thout, wout = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=10,f2=-10,f3=100,npoint=1000,fig=fig,axs=ax)
+    print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment2/AssArrangment.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+
+# %% try to optimize oyher expander
+table=[(10,119.98),
+       (20,115),
+       (30,113.35),
+       (40,112.5),
+       (50,112)]
+fig, ax = plt.subplots()
+for (d1,d2) in table:
+    fig, ax, Mg, dout, thout, wout = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=10,f2=-10,f3=120,npoint=1000,fig=fig,axs=ax)
+    print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment2/Mydesign.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
 # %%
+plt.show()
+
