@@ -156,21 +156,6 @@ axs.legend()
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment2/dvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
-# %% check linearity - definition with useful beam radius
-fig, axs=plt.subplots()
-fig.tight_layout()
-Mg_vect=[]
-d2      =   112.5                       # note that this is optimized for 40x !!!
-d1_vect =   np.linspace(38,42,500)      # try some d1
-for d1 in d1_vect:
-    Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[6]
-    Mg_vect.append(Mg)
-axs.plot(d1_vect,Mg_vect,label=f'$d_2={round(d2,3)}$')
-
-axs.set_xlabel('$d_1$ [mm]')
-axs.set_ylabel('w_{end}/w_0 [-]')
-axs.grid(True, 'Both')
-axs.legend()
 
 # %% check linearity - envelope
 fig, axs=plt.subplots()
@@ -195,6 +180,25 @@ axs.legend(ncol=4)
 
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment2/LinApprox.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+# %% check linearity - definition with useful beam radius
+fig, axs=plt.subplots()
+fig.tight_layout()
+d1_vect =   np.linspace(10,50,10)      # try some d1
+d2_vect =   np.linspace(120,112,5)     # try some d2
+
+for d2 in d2_vect:
+    Mg_vect =   []
+    for d1 in d1_vect:
+        W_out = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[6]
+        Mg_vect.append(W_out/0.5)
+    axs.plot(d1_vect,Mg_vect,label=f'$d_2={round(d2,3)}$')
+axs.set_xlabel('$d_1$ [mm]')
+axs.set_ylabel('$\\frac{w(z=L_2+2\\cdot f_3)}{w_0}$ [-]')
+axs.grid(True, 'Both')
+axs.legend()
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment2/Woutvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% check result for all the row of the table
 table=[(10,120.006),
