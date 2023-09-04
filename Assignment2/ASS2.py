@@ -31,18 +31,28 @@ def isNotebook() -> bool:
 #  Function for plotting the beam radius
 def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
-    # lam0      wavelength considered                           [mm]
-    # w0        initial beam waist                              [mm]
-    # d0        from initial waist to first thin lens           [mm]
-    # d1        between first and second thin lenses            [mm]
-    # d2        between second and third thin lenses            [mm]
-    # f1        focal length first lens                         [mm]
-    # f2        focal length first lens                         [mm]
-    # f3        focal length first lens                         [mm]
-    # npoint    number of points of the plot (resolution)       [--]
-    # fig=None  figure handle
-    # axs=None  axis handle
-    # plot=True T=generate plot; F=generate only the data
+    # parameters:
+    #   lam0        wavelength considered                           [mm]
+    #   w0          initial beam waist                              [mm]
+    #   d0          from initial waist to first thin lens           [mm]
+    #   d1          between first and second thin lenses            [mm]
+    #   d2          between second and third thin lenses            [mm]
+    #   f1          focal length first lens                         [mm]
+    #   f2          focal length first lens                         [mm]
+    #   f3          focal length first lens                         [mm]
+    #   npoint      number of points of the plot (resolution)       [--]
+    #   fig=None    figure handle
+    #   axs=None    axis handle
+    #   plot=True   T=generate plot; F=generate only the data
+    # returns:
+    #   fig         figure handle of the plot
+    #   axs         axis handle of the plot
+    #   M           overall magnification of the system
+    #   d3          location of the output waist w.r.t. last lens
+    #   th3*10**5   angle of output beam *10^5
+    #   w3          output waist
+    #   w_end       beam radius at the end of the system
+    
     L1      =   d0+d1                           # second length position
     L2      =   d0+d1+d2                        # third length position
     zr0     =   np.pi*w0**2/lam0                # Rayleigh range
@@ -78,26 +88,26 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     w       =   []                              # initialize beam radius along z
 
     d3      =   f3+M3**2*(dp-f3)                # location of output waist w.r.t. last lens (if negative diverges already from lens position)
-    if plot:                                    # plot if needed, skip if not
-        for z in z_vect:
-            if      0<=z<d0:
-                q   = q0+(z-0)                  # propagate q to z position
-                aux = 1/q                       # auxilliary for radius calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
-            elif    d0<=z<L1:
-                q   = q1plus+(z-d0)             # propagate q to z position
-                aux = 1/q                       # auxilliary for radius calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
-            elif    L1<=z<L2:
-                q   = q2plus+(z-L1)             # propagate q to z position
-                aux = 1/q                       # auxilliary for radius calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
-            elif    L2<=z:
-                q   = q3plus+(z-L2)             # propagate q to z position
-                aux = 1/q                       # auxilliary for radius calculation
-                w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+    for z in z_vect:
+        if      0<=z<d0:
+            q   = q0+(z-0)                  # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+        elif    d0<=z<L1:
+            q   = q1plus+(z-d0)             # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+        elif    L1<=z<L2:
+            q   = q2plus+(z-L1)             # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+        elif    L2<=z:
+            q   = q3plus+(z-L2)             # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
         ymax=max(w)*1.1;    ymin=-0
-        xmin=0.75*d0; xmax=L2+2*f3
+    xmin=0.75*d0; xmax=L2+2*f3
+    if plot:                                    # plot if needed, skip if not
         if fig == None or axs == None:
             fig, axs=plt.subplots()
         fig.tight_layout()
@@ -108,7 +118,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
         axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta")
         axs.grid(True, 'major')
         axs.legend()
-    return fig, axs, M1*M2*M3, d3, th3*10**5, w3
+    return fig, axs, M1*M2*M3, d3, th3*10**5, w3, w[-1]
         
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
@@ -121,19 +131,18 @@ table=[(10,120.006),
        (50,112.000)]
 fig, ax = plt.subplots()
 for (d1,d2) in table:
-    fig, ax, Mg, dout, thout, wout = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,npoint=1000,fig=fig,axs=ax)
+    fig, ax, Mg, dout, thout, wout, w_end = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,npoint=1000,fig=fig,axs=ax)
     print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment2/PLOT.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% check linearity
-   
 fig, axs=plt.subplots()
 fig.tight_layout()
 Mg_vect=[]
 d2      =   112.5                       # note that this is optimized for 40x !!!
-d1_vect =   np.linspace(38,42,500)     # try some d1
+d1_vect =   np.linspace(38,42,500)      # try some d1
 for d1 in d1_vect:
     Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[2]
     Mg_vect.append(Mg)
@@ -147,9 +156,23 @@ axs.legend()
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment2/dvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
+# %% check linearity - definition with useful beam radius
+fig, axs=plt.subplots()
+fig.tight_layout()
+Mg_vect=[]
+d2      =   112.5                       # note that this is optimized for 40x !!!
+d1_vect =   np.linspace(38,42,500)      # try some d1
+for d1 in d1_vect:
+    Mg = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=-10,f2=10,f3=100,plot=False)[6]
+    Mg_vect.append(Mg)
+axs.plot(d1_vect,Mg_vect,label=f'$d_2={round(d2,3)}$')
 
-# %% check linearity
-   
+axs.set_xlabel('$d_1$ [mm]')
+axs.set_ylabel('w_{end}/w_0 [-]')
+axs.grid(True, 'Both')
+axs.legend()
+
+# %% check linearity - envelope
 fig, axs=plt.subplots()
 fig.tight_layout()
 maximum=[]
@@ -165,8 +188,6 @@ for d2 in np.linspace(120,112,11):
     d_max.append(LinRel[0][maxindex])
     axs.scatter(LinRel[0],LinRel[1],marker='.',label=f'$d_2={round(d2,3)}$')
 axs.plot(d_max,maximum,'k',label=f'peack values')
-
-
 axs.set_xlabel('$d_1$ [mm]')
 axs.set_ylabel('Magnification [-]')
 axs.grid(True, 'Both')
@@ -183,7 +204,7 @@ table=[(10,120.006),
        (50,112.000)]
 fig, ax = plt.subplots()
 for (d1,d2) in table:
-    fig, ax, Mg, dout, thout, wout = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=10,f2=-10,f3=100,npoint=1000,fig=fig,axs=ax)
+    fig, ax, Mg, dout, thout, wout, w_end = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=10,f2=-10,f3=100,npoint=1000,fig=fig,axs=ax)
     print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
 tikzplotlib_fix_ncols(fig)
@@ -198,7 +219,7 @@ table=[(10,119.98),
        (50,112)]
 fig, ax = plt.subplots()
 for (d1,d2) in table:
-    fig, ax, Mg, dout, thout, wout = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=10,f2=-10,f3=120,npoint=1000,fig=fig,axs=ax)
+    fig, ax, Mg, dout, thout, wout, w_end = BeamExpander(lam0=0.0006328,w0=0.5,d0=100,d1=d1,d2=d2,f1=10,f2=-10,f3=120,npoint=1000,fig=fig,axs=ax)
     print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
 tikzplotlib_fix_ncols(fig)
