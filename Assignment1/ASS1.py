@@ -5,62 +5,8 @@ import numpy as np
 import matplotlib
 import tikzplotlib
 import scipy.integrate as integrate
-
 matplotlib.use('Qt5Agg')
 
-def mlayer(n,L,lam0,theta=0,pol='TE'):
-    # compute the input reflectivity for a multilayer stack of materials (first and last mediums infinetely thick)
-    # imputs:
-    #   n     : array-like,       array of reflactive indeces (constant, no chromatic aberration considered)
-    #   L     : array-like,       array of thickneses of layers (len(L)=len(n)-2)
-    #   lam0  : array-like,       wavelength in vacuum to be tested
-    #   theta : float,            angle of incidence (deg), default=0 deg
-    #   pol   : str,              "TE" if perpendicular polarization, "TM" for parallel polarization, default = "TE"
-    # return:
-    #   R     : array-like        input reflectivity
-    
-    if not isinstance(n, np.ndarray):        # convert to np.array if needed
-        n   =   np.array(n)
-    if not isinstance(L, np.ndarray):        # convert to np.array if needed
-        L   =   np.array(L) 
-    if not isinstance(lam0, np.ndarray):     # convert to np.array if needed
-        lam0   =   np.array(lam0) 
-    
-
-    theta=theta*np.pi/180           # from deg to rad
-
-    if not len(L)==(len(n)-2):      # check consistency of dimensions
-        raise Exception("len(L)!=len(n)-2")
-    
-    Z0  =   120*np.pi               # vacuum impedence
-    R=[]                            # initialize empty reflectivity
-    for lam in lam0:                # iterate for all wavelength of interest
-        k0      =   2*np.pi/lam     # k0 inital wave number
-        k_vect  =   k0*(n[1:-1]**2-n[0]**2*np.sin(theta)**2)**0.5
-        for ii in range(0,len(k_vect)):
-            if np.imag(k_vect[ii])>0:        # fix k_z=-j*alpha
-                k_vect[ii]=k_vect[ii].conjugate()
-        
-        # compute the z_infs
-        match pol:
-            case "TE":
-                zinf = Z0/(n**2-n[0]**2*np.sin(theta)**2)**(0.5)
-            case "TM":
-                zinf = Z0/(n**2)*(n**2-n[0]**2*np.sin(theta)**2)**(0.5)
-            case _ :
-                raise Exception('pol is neither "TE" nor "TM"')
-            
-        for ii in range(0,len(zinf)):
-            if np.imag(zinf[ii])<0:        # fix z_inf
-                k_vect[ii]=k_vect[ii].conjugate()
-
-        rho = (zinf[1:]-zinf[0:-1])/(zinf[1:]+zinf[0:-1])
-
-        gamma=[rho[-1]]                   # initialize gamma array - last reflective coefficient is rho
-        for r,k,l in zip(reversed(rho[:-1]),reversed(k_vect),reversed(L)):# reverse to propagate backward
-            gamma.append((r+gamma[-1]*np.exp(-2j*k*l))/(1+r*gamma[-1]*np.exp(-2j*k*l)))
-        R.append(abs(gamma[-1]**2*100))
-    return R  # reflectivity [%]
 
 def tikzplotlib_fix_ncols(obj):
     """
@@ -3440,7 +3386,7 @@ tikzplotlib.save('Assignment1/irradiance.tex',axis_width='0.9\\textwidth',axis_h
 # %% sLARC design
 lambda0=495 # design wavelength [nm]
 n_ideal=np.sqrt(n_air*n_si) # ideal refractive index at lambda0
-d_ideal=lambda0/4/n_ideal   # ideal thickness
+d_ideal=lambda0/4/n_ideal # ideal thickness
 n_TiO2= 2.7193              # at 495 nm
 d_TiO2= lambda0/4/n_TiO2    # optimized for lambda0
 n_Si3N4 = 2.0647            # at 495 nm
@@ -3469,17 +3415,15 @@ for n_ar, d in zip([n_ideal,n_Al2O3,n_Si3N4,n_SiO2,n_TiO2], [d_ideal,d_Al2O3,d_S
     Gaminus=(Za-Z0)/(Za+Z0)
     R_vect=np.abs(Gaminus)**2*100
     axs.plot(lambdas,R_vect)
-    R_fun=mlayer([n_air,n_ar,n_si],[d*(1/10**9)],lambdas*(1/10**9),45,"TE")
-    axs.plot(lambdas,R_fun,linestyle='dotted')
 
 
 axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Reflectivity [%]')
 axs.grid(True,'both')
 axs.minorticks_on()
-axs.legend(['ideal $n=1.9493$','', '$Al_2O_3 \,'', n=1.7747$','', '$Si_3N_4 \,'', n=2.0647$','', '$SiO_2 \,'', n=1.4626$','', '$TiO_2 \,'', n=2.7193$'])
-#tikzplotlib_fix_ncols(fig)
-#tikzplotlib.save('Assignment1/SLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+axs.legend(['ideal $n=1.9493$', '$Al_2O_3 \, n=1.7747$', '$Si_3N_4 \, n=2.0647$', '$SiO_2 \, n=1.4626$', '$TiO_2 \, n=2.7193$'])
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment1/SLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 # %% compute the chromatic dispersion
@@ -3546,8 +3490,8 @@ n_dict={"$Na_3AlF_6$": 1.35,
 
 
 # %% DLARC - SILICA/TITANIA
-Z_inf_SiO2=Z0/n_dict['$SiO_2$']
-Z_inf_TiO2=Z0/n_dict['$TiO_2$']
+Z_inf_SiO2=Z0/n_SiO2
+Z_inf_TiO2=Z0/n_TiO2
 Gcminus=(Z_inf_Si-Z_inf_TiO2)/(Z_inf_Si+Z_inf_TiO2)
 k=K0*n_dict['$TiO_2$']
 Gbplus=Gcminus*np.exp(-2j*k*d_TiO2)
@@ -3558,8 +3502,6 @@ Gaplus=Gbminus*np.exp(-2j*k*d_SiO2)
 Za=Z_inf_SiO2*(1+Gaplus)/(1-Gaplus)
 Gaminus=(Za-Z0)/(Za+Z0)
 R_DLARC_SiO2TiO2=np.abs(Gaminus)**2*100
-R_DLARC_SiO2TiO2_func=mlayer([n_air,n_dict['$SiO_2$'],n_dict['$TiO_2$'],n_si],[d_SiO2,d_TiO2],lambdas,0,'TM')
-
 
 # %% DL ARC - my design
 legend=[]
@@ -3595,27 +3537,25 @@ Gaplus=Gbminus*np.exp(-2j*k*d_Ta)
 Za=Z_inf_Ta*(1+Gaplus)/(1-Gaplus)
 Gaminus=(Za-Z0)/(Za+Z0)
 R_DLARC_Ta2O5Ge=np.abs(Gaminus)**2*100
-R_DLARC_Ta2O5Ge_func=mlayer([n_air,n_dict['$Ta_2O_5$'],n_dict['$Ge$'],n_si],[d_Ta,d_Ge],lambdas,0,'TE')
+
+
 
 
 # %% check reflectivity - SLARC / DLARCs
 fig, axs=plt.subplots()
 fig.tight_layout()
-axs.plot(lambdas,R_DLARC_SiO2TiO2)
-axs.plot(lambdas,R_DLARC_Ta2O5Ge)
-axs.plot(lambdas,R_SLARC)
-axs.plot(lambdas,R_DLARC_SiO2TiO2_func,':')
-axs.plot(lambdas,R_DLARC_Ta2O5Ge_func,':')
+axs.semilogy(lambdas,R_DLARC_SiO2TiO2)
+axs.semilogy(lambdas,R_DLARC_Ta2O5Ge)
+axs.semilogy(lambdas,R_SLARC)
 
 axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Reflectivity [%]')
 axs.grid(True,'both')
 axs.minorticks_on()
 axs.legend(['DLARC $TiO2 \,/\, SiO2$','DLARC $Ta_2O_5 \,/\, Ge$','SLARC $Si_3N_4$'])
-# tikzplotlib_fix_ncols(fig)
-# tikzplotlib.save('Assignment1/DLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
-plt.show()
-exit()
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment1/DLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
 # %% check effective reflectivity
 indx=0
 R_eff=[]; R_min=[]
