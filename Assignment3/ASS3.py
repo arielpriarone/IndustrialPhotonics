@@ -80,7 +80,7 @@ def mlayer(n,L,lam0,theta=0,pol='TE'):
         for r,k,l in zip(reversed(rho[:-1]),reversed(k_vect),reversed(L)):# reverse to propagate backward
             gamma.append((r+gamma[-1]*np.exp(-2j*k*l))/(1+r*gamma[-1]*np.exp(-2j*k*l)))
         R.append(abs(gamma[-1]**2*100))
-    return R  # reflectivity [%]
+    return np.array(R)  # reflectivity [%]
 
 def tikzplotlib_fix_ncols(obj):
     """
@@ -106,4 +106,95 @@ def isNotebook() -> bool:
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
 
-# %% c
+# %% data of the problem
+lam0    =   1070*10**(-9)               # design wavelength
+nair    =   1                           # left medim refr index
+nH      =   1.46                        # refr index layer H (silicon dioxide)
+nL      =   1.38                        # refr index layer L (magnesium fluoride)
+ng      =   1.5                         # right medim refr index (glass)
+dH      =   lam0/4/nH                   # thickness layer H
+dL      =   lam0/4/nL                   # thickness layer L
+
+lam     =   np.linspace(lam0*0.80,lam0*1.2,1000)
+
+fig, axs=plt.subplots(3, 1, sharex=True, sharey=True)
+fig.tight_layout()
+ii = 0
+for ncouples in [15,30,80]:
+    for theta in np.linspace(0,45,5):
+        n=np.tile([nH, nL],ncouples)    # concatenate bilayers indeces
+        d=np.tile([dH, dL],ncouples)    # concatenate bilayers thicknesses
+        n=np.concatenate(([nair],n))    # add air medium
+        n=np.concatenate((n,[ng]))      # add glass medium
+
+        Rtm=mlayer(n,d,lam,theta,'TM')  # tm polarization reflectivity
+        Rte=mlayer(n,d,lam,theta,'TE')  # te polarization reflectivity
+
+        axs[ii].plot(lam/lam0,(Rte+Rtm)/2,label=f'$\\theta={round(theta,3)}^\\circ$')
+        print(f'$\\theta={round(theta,3)}^\\circ$')
+    axs[ii].grid(True, 'Both')
+    axs[ii].set_title(f'{ncouples} bilayers')
+    axs[ii].set_ylabel('$R$ [%]')
+    ii+=1
+axs[-1].set_xlabel('$\\lambda/\\lambda_0$')
+axs[-1].legend(loc='lower right')
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig1.tex',axis_width='0.9\\textwidth',axis_height ='5cm')
+
+
+# %% design of the dichroic mirror
+# data of the problem
+lam0_c  =   1070*10**(-9)/0.867         # design wavelength - compensated for the AOI
+dH      =   lam0_c/4/nH                 # thickness layer H
+dL      =   lam0_c/4/nL                 # thickness layer L
+ncouples =  80                          # how many bilayers
+theta   =   45                          # AOU - degrees
+lam     =   np.linspace(lam0*0.9,lam0*1.1,1000) # around laser wavelength
+
+fig, axs=plt.subplots()
+fig.tight_layout()
+n=np.tile([nH, nL],ncouples)    # concatenate bilayers indeces
+d=np.tile([dH, dL],ncouples)    # concatenate bilayers thicknesses
+n=np.concatenate(([nair],n))    # add air medium
+n=np.concatenate((n,[ng]))      # add glass medium
+
+Rtm=mlayer(n,d,lam,theta,'TM')  # tm polarization reflectivity
+Rte=mlayer(n,d,lam,theta,'TE')  # te polarization reflectivity
+
+axs.plot(lam,(Rte),label=f'$TE$')
+axs.plot(lam,(Rtm),label=f'$TM$')
+axs.plot(lam,(Rte+Rtm)/2,label=f'$average$')
+axs.vlines([lam0],-5,105,colors='red',linestyles='dashdot')
+axs.grid(True, 'Both')
+axs.set_title(f'{ncouples} bilayers')
+axs.set_ylabel('$R$ [%]')
+axs.set_xlabel('$\\lambda$ [m]')
+axs.legend(loc='upper right')
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig2.tex',axis_width='0.9\\textwidth',axis_height ='5cm')
+
+
+# %% check reflectivity in visible range
+# data of the problem
+lam     =   np.linspace(380,700,1000)*10**(-9) # visible range
+
+fig, axs=plt.subplots()
+fig.tight_layout()
+
+Rtm=mlayer(n,d,lam,theta,'TM')  # tm polarization reflectivity
+Rte=mlayer(n,d,lam,theta,'TE')  # te polarization reflectivity
+
+axs.plot(lam,(Rte),label=f'$TE$')
+axs.plot(lam,(Rtm),label=f'$TM$')
+axs.plot(lam,(Rte+Rtm)/2,label=f'$average$')
+axs.grid(True, 'Both')
+axs.set_ylabel('$R$ [%]')
+axs.set_xlabel('$\\lambda$ [m]')
+axs.legend(loc='upper right')
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig3.tex',axis_width='0.9\\textwidth',axis_height ='5cm')
+
+
+plt.show()

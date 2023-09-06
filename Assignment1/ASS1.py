@@ -3598,7 +3598,6 @@ R_DLARC_Ta2O5Ge=np.abs(Gaminus)**2*100
 R_DLARC_Ta2O5Ge_func=mlayer([n_air,n_dict['$Ta_2O_5$'],n_dict['$Ge$'],n_si],[d_Ta,d_Ge],lambdas,0,'TE')
 
 
-
 # %% check reflectivity - SLARC / DLARCs
 fig, axs=plt.subplots()
 fig.tight_layout()
