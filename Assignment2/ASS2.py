@@ -29,7 +29,7 @@ def isNotebook() -> bool:
         return False      # Probably standard Python interpreter
 
 #  Function for plotting the beam radius
-def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1):
+def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1,zmin=None,zmax=None):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
     # parameters:
     #   lam0        wavelength considered                           [mm]
@@ -45,6 +45,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     #   axs=None    axis handle
     #   plot=True   T=generate plot; F=generate only the data
     #   Ms          quality factor of the beam (ref slide 05/177)   [--]
+    #   zmin        z axis limit to consider                        [mm]
+    #   zmax        z axis limit to consider                        [mm]
     # returns:
     #   fig         figure handle of the plot
     #   axs         axis handle of the plot
@@ -92,7 +94,11 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     q3minus =   q2plus+d2                       # propagate left side third lens
     A,B,C,D =   (1,0,-1/f3,1)                   # matrix entries of third lens
     q3plus  =   (A*q3minus+B)/(C*q3minus+D)     # propagate right side third lens
-    z_vect  =   np.linspace(0,L2+2*f3,npoint)   # points of z axis
+    if zmin is None:
+        zmin=   0                               # min of z axis
+    if zmax is None:
+        zmax=   L2+2*f3                         # max of z axis
+    z_vect  =   np.linspace(zmin,zmax,npoint)   # points of z axis
     w       =   []                              # initialize beam radius along z
     w_r     =   []                              # this will be the real beam (not gaussian)
 
@@ -119,7 +125,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
             w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
             w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis
         ymax=max(w)*1.1;    ymin=-0
-    xmin=0.75*d0; xmax=L2+2*f3
+    xmin=0; xmax=L2+2*f3
     if plot:                                    # plot if needed, skip if not
         if fig == None or axs == None:
             fig, axs=plt.subplots()
