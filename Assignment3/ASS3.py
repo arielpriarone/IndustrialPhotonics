@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib
 import tikzplotlib
 import scipy.integrate as integrate
+from matplotlib.lines import Line2D
 matplotlib.use('Qt5Agg')
 
 def tikzplotlib_fix_ncols(obj):
@@ -103,7 +104,7 @@ def isNotebook() -> bool:
     except NameError:
         return False      # Probably standard Python interpreter 
 
-def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1):
+def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1,zmin=None,zmax=None):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
     # parameters:
     #   lam0        wavelength considered                           [mm]
@@ -119,6 +120,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     #   axs=None    axis handle
     #   plot=True   T=generate plot; F=generate only the data
     #   Ms          quality factor of the beam (ref slide 05/177)   [--]
+    #   zmin        z axis limit to consider                        [mm]
+    #   zmax        z axis limit to consider                        [mm]
     # returns:
     #   fig         figure handle of the plot
     #   axs         axis handle of the plot
@@ -166,11 +169,15 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     q3minus =   q2plus+d2                       # propagate left side third lens
     A,B,C,D =   (1,0,-1/f3,1)                   # matrix entries of third lens
     q3plus  =   (A*q3minus+B)/(C*q3minus+D)     # propagate right side third lens
-    z_vect  =   np.linspace(0,L2+2*f3,npoint)   # points of z axis
+    if zmin is None:
+        zmin=   0                               # min of z axis
+    if zmax is None:
+        zmax=   L2+2*f3                         # max of z axis
+    z_vect  =   np.linspace(zmin,zmax,npoint)   # points of z axis
     w       =   []                              # initialize beam radius along z
     w_r     =   []                              # this will be the real beam (not gaussian)
 
-    S3II    =   f3+M3**2*(S3I-f3)               # location of output waist w.r.t. last lens
+    S3II    =   f3+M3**2*(S3I-f3)               # location of output waist w.r.t. last lens (if negative, the beam is already diverging)
     for z in z_vect:
         if      0<=z<d0:
             q   = q0+(z-0)                  # propagate q to z position
@@ -191,9 +198,9 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
             q   = q3plus+(z-L2)             # propagate q to z position
             aux = 1/q                       # auxilliary for radius calculation
             w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
-            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis (if negative, the beam is already diverging)
+            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis
         ymax=max(w)*1.1;    ymin=-0
-    xmin=0.75*d0; xmax=L2+2*f3
+    xmin=0; xmax=L2+2*f3
     if plot:                                    # plot if needed, skip if not
         if fig == None or axs == None:
             fig, axs=plt.subplots()
@@ -223,29 +230,29 @@ dL      =   lam0/4/nL                   # thickness layer L
 
 lam     =   np.linspace(lam0*0.80,lam0*1.2,1000)
 
-# fig, axs=plt.subplots(3, 1, sharex=True, sharey=True)
-# fig.tight_layout()
-# ii = 0
-# for ncouples in [15,30,80]:
-#     for theta in np.linspace(0,45,5):
-#         n=np.tile([nH, nL],ncouples)    # concatenate bilayers indeces
-#         d=np.tile([dH, dL],ncouples)    # concatenate bilayers thicknesses
-#         n=np.concatenate(([nair],n))    # add air medium
-#         n=np.concatenate((n,[ng]))      # add glass medium
+fig, axs=plt.subplots(3, 1, sharex=True, sharey=True)
+fig.tight_layout()
+ii = 0
+for ncouples in [15,30,80]:
+    for theta in np.linspace(0,45,5):
+        n=np.tile([nH, nL],ncouples)    # concatenate bilayers indeces
+        d=np.tile([dH, dL],ncouples)    # concatenate bilayers thicknesses
+        n=np.concatenate(([nair],n))    # add air medium
+        n=np.concatenate((n,[ng]))      # add glass medium
 
-#         Rtm=mlayer(n,d,lam,theta,'TM')  # tm polarization reflectivity
-#         Rte=mlayer(n,d,lam,theta,'TE')  # te polarization reflectivity
+        Rtm=mLayerReflectivity(n,d,lam,theta,'TM')  # tm polarization reflectivity
+        Rte=mLayerReflectivity(n,d,lam,theta,'TE')  # te polarization reflectivity
 
-#         axs[ii].plot(lam/lam0,(Rte+Rtm)/2,label=f'$\\theta={round(theta,3)}^\\circ$')
-#         print(f'$\\theta={round(theta,3)}^\\circ$')
-#     axs[ii].grid(True, 'Both')
-#     axs[ii].set_title(f'{ncouples} bilayers')
-#     axs[ii].set_ylabel('$R$ [%]')
-#     ii+=1
-# axs[-1].set_xlabel('$\\lambda/\\lambda_0$')
-# axs[-1].legend(loc='lower right')
-# tikzplotlib_fix_ncols(fig)
-# tikzplotlib.save('Assignment3/fig1.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+        axs[ii].plot(lam/lam0,(Rte+Rtm)/2,label=f'$\\theta={round(theta,3)}^\\circ$')
+        print(f'$\\theta={round(theta,3)}^\\circ$')
+    axs[ii].grid(True, 'Both')
+    axs[ii].set_title(f'{ncouples} bilayers')
+    axs[ii].set_ylabel('$R$ [%]')
+    ii+=1
+axs[-1].set_xlabel('$\\lambda/\\lambda_0$')
+axs[-1].legend(loc='lower right')
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig1.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 # %% design of the dichroic mirror
@@ -267,18 +274,18 @@ n=np.concatenate((n,[ng]))      # add glass medium
 Rtm=mLayerReflectivity(n,d,lam,theta,'TM')  # tm polarization reflectivity
 Rte=mLayerReflectivity(n,d,lam,theta,'TE')  # te polarization reflectivity
 
-# axs.plot(lam,(Rte),label=f'$TE$')
-# axs.plot(lam,(Rtm),label=f'$TM$')
-# axs.plot(lam,(Rte+Rtm)/2,label=f'$average$')
-# axs.vlines([lam0],-5,105,colors='red',linestyles='dashdot')
-# axs.grid(True, 'Both')
-# axs.set_title(f'{ncouples} bilayers')
-# axs.set_ylabel('$R$ [%]')
-# axs.set_xlabel('$\\lambda$ [m]')
-# axs.legend(loc='upper right')
+axs.plot(lam,(Rte),label=f'$TE$')
+axs.plot(lam,(Rtm),label=f'$TM$')
+axs.plot(lam,(Rte+Rtm)/2,label=f'$average$')
+axs.vlines([lam0],-5,105,colors='red',linestyles='dashdot')
+axs.grid(True, 'Both')
+axs.set_title(f'{ncouples} bilayers')
+axs.set_ylabel('$R$ [%]')
+axs.set_xlabel('$\\lambda$ [m]')
+axs.legend(loc='upper right')
 
-# tikzplotlib_fix_ncols(fig)
-# tikzplotlib.save('Assignment3/fig2.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig2.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 # %% check reflectivity in visible range
@@ -291,16 +298,16 @@ fig.tight_layout()
 Rtm=mLayerReflectivity(n,d,lam,theta,'TM')  # tm polarization reflectivity
 Rte=mLayerReflectivity(n,d,lam,theta,'TE')  # te polarization reflectivity
 
-# axs.plot(lam,(Rte),label=f'$TE$')
-# axs.plot(lam,(Rtm),label=f'$TM$')
-# axs.plot(lam,(Rte+Rtm)/2,label=f'$average$')
-# axs.grid(True, 'Both')
-# axs.set_ylabel('$R$ [%]')
-# axs.set_xlabel('$\\lambda$ [m]')
-# axs.legend(loc='upper right')
+axs.plot(lam,(Rte),label=f'$TE$')
+axs.plot(lam,(Rtm),label=f'$TM$')
+axs.plot(lam,(Rte+Rtm)/2,label=f'$average$')
+axs.grid(True, 'Both')
+axs.set_ylabel('$R$ [%]')
+axs.set_xlabel('$\\lambda$ [m]')
+axs.legend(loc='upper right')
 
-# tikzplotlib_fix_ncols(fig)
-# tikzplotlib.save('Assignment3/fig3.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig3.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 #%% compute the irradiance for the focus spot
 # first laser
@@ -342,12 +349,60 @@ tikzplotlib.save('Assignment3/fig4.tex',axis_width='0.9\\textwidth',axis_height 
 
 
 
-# %% study the first laser with three heads
+# %% study the lasers with three heads
+# first laser
 w0  =   14/2/10**6                      # approximate the waist with the core radius [um]
 MS  =   1.2                             # quality factor
-(d0,d1,d2)  = (100,10,10)               # spacing configuration
-(f1,f2,f3)  = (100,float('inf'),125)    # lenses configuration
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,MS=MS)
+(d0,d1,d2)  = (100,0,100)               # spacing configuration
+
+(f1,f2,f3)  = (100,10**99,125)          # lenses configuration 1
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**99,150)          # lenses configuration 2
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**99,200)          # lenses configuration 3
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+print(w_out*10**3)
+
+# second laser
+w0  =  100/2/10**6                      # approximate the waist with the core radius [um]
+BPP = 5/10**6                           # beam parameter product [mm*rad]
+MS  = BPP/lam0*np.pi                    # quality factor
+
+(f1,f2,f3)  = (100,10**99,125)          # lenses configuration 1
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**99,150)          # lenses configuration 2
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**99,200)          # lenses configuration 3
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+print(w_out*10**3)
+
+axs.set_ylim([0,5.4])
+axs.legend().remove
+
+legend_elements = [Line2D([0], [0], color='#1f77b4', label='$f_3=125$, laser 1'),
+                   Line2D([0], [0], color='#ff7f0e', label='$f_3=150$, laser 1'),
+                   Line2D([0], [0], color='#2ca02c', label='$f_3=200$, laser 1'),
+                   Line2D([0], [0], color='#d62728', label='$f_3=125$, laser 2'),
+                   Line2D([0], [0], color='#9467bd', label='$f_3=150$, laser 2'),
+                   Line2D([0], [0], color='#8c564b', label='$f_3=200$, laser 2')]
+axs.legend(handles=legend_elements, loc='upper right')
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig5.tex',axis_width='0.9\\textwidth',axis_height ='9cm')
+
+# detail of one spot
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,zmin=399.8,zmax=400.2)
+axs.legend().remove
+axs.set_xlim(399.8,400.2)
+axs.annotate("$w_{0,ideal}$",[400,w_out/(MS**0.5)],[400.025,w_out/(MS**0.5)],arrowprops=dict(facecolor='black', shrink=0.005))
+axs.annotate("$w_{0,ideal}\\cdot M$",[400,w_out],[400.025,w_out],arrowprops=dict(facecolor='black', shrink=0.005))
+
+tikzplotlib_fix_ncols(fig)
+tikzplotlib.save('Assignment3/fig6.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 plt.show()
