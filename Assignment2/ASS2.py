@@ -96,7 +96,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     w       =   []                              # initialize beam radius along z
     w_r     =   []                              # this will be the real beam (not gaussian)
 
-    S3II    =   f3+M3**2*(S3I-f3)               # location of output waist w.r.t. last lens
+    S3II    =   f3+M3**2*(S3I-f3)               # location of output waist w.r.t. last lens (if negative, the beam is already diverging)
     for z in z_vect:
         if      0<=z<d0:
             q   = q0+(z-0)                  # propagate q to z position
@@ -117,7 +117,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
             q   = q3plus+(z-L2)             # propagate q to z position
             aux = 1/q                       # auxilliary for radius calculation
             w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
-            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis (if negative, the beam is already diverging)
+            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis
         ymax=max(w)*1.1;    ymin=-0
     xmin=0.75*d0; xmax=L2+2*f3
     if plot:                                    # plot if needed, skip if not
