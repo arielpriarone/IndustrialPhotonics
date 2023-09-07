@@ -92,22 +92,10 @@ def tikzplotlib_fix_ncols(obj):
     for child in obj.get_children():
         tikzplotlib_fix_ncols(child)
 
-def isNotebook() -> bool:
-    try:
-        shell = get_ipython().__class__.__name__
-        if shell == 'ZMQInteractiveShell':
-            return True   # Jupyter notebook or qtconsole
-        elif shell == 'TerminalInteractiveShell':
-            return False  # Terminal running IPython
-        else:
-            return False  # Other type (?)
-    except NameError:
-        return False      # Probably standard Python interpreter 
-
 def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1,zmin=None,zmax=None):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
     # parameters:
-    #   lam0        wavelength considered                           [mm]
+    #   lam0        wavelength considered                           [m ]
     #   w0          initial beam waist                              [mm]
     #   d0          from initial waist to first thin lens           [mm]
     #   d1          between first and second thin lenses            [mm]
@@ -351,36 +339,36 @@ tikzplotlib.save('Assignment3/fig4.tex',axis_width='0.9\\textwidth',axis_height 
 
 # %% study the lasers with three heads
 # first laser
-w0  =   14/2/10**6                      # approximate the waist with the core radius [um]
+w0  =   14/2/10**3                      # approximate the waist with the core radius [mm]
 MS  =   1.2                             # quality factor
 (d0,d1,d2)  = (100,0,100)               # spacing configuration
 
-(f1,f2,f3)  = (100,10**99,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS)
+(f1,f2,f3)  = (100,10**50,125)          # lenses configuration 1
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS)
 print(w_out*10**3)
-(f1,f2,f3)  = (100,10**99,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+(f1,f2,f3)  = (100,10**50,150)          # lenses configuration 2
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
-(f1,f2,f3)  = (100,10**99,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+(f1,f2,f3)  = (100,10**50,200)          # lenses configuration 3
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
 
 # second laser
-w0  =  100/2/10**6                      # approximate the waist with the core radius [um]
-BPP = 5/10**6                           # beam parameter product [mm*rad]
+w0  =  100/2/10**3                      # approximate the waist with the core radius [mm]
+BPP = 5/10**6                           # beam parameter product [m*rad]
 MS  = BPP/lam0*np.pi                    # quality factor
 
-(f1,f2,f3)  = (100,10**99,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+(f1,f2,f3)  = (100,10**50,125)          # lenses configuration 1
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
-(f1,f2,f3)  = (100,10**99,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+(f1,f2,f3)  = (100,10**50,150)          # lenses configuration 2
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
-(f1,f2,f3)  = (100,10**99,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+(f1,f2,f3)  = (100,10**50,200)          # lenses configuration 3
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
 
-axs.set_ylim([0,5.4])
+axs.set_ylim([0,5.5])
 axs.legend().remove
 
 legend_elements = [Line2D([0], [0], color='#1f77b4', label='$f_3=125$, laser 1'),
@@ -394,12 +382,51 @@ axs.legend(handles=legend_elements, loc='upper right')
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment3/fig5.tex',axis_width='0.9\\textwidth',axis_height ='9cm')
 
-# detail of one spot
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,zmin=399.8,zmax=400.2)
+# %% detail of  spots
+
+# first laser
+w0  =   14/2/10**3                      # approximate the waist with the core radius [mm]
+MS  =   1.2                             # quality factor
+(d0,d1,d2)  = (100,0,100)               # spacing configuration
+
+(f1,f2,f3)  = (100,10**50,125)          # lenses configuration 1
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,zmin=315,zmax=410)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**50,150)          # lenses configuration 2
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**50,200)          # lenses configuration 3
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+print(w_out*10**3)
+
+# second laser
+w0  =  100/2/10**3                      # approximate the waist with the core radius [mm]
+BPP = 5/10**6                           # beam parameter product [m*rad]
+MS  = BPP/lam0*np.pi                    # quality factor
+
+(f1,f2,f3)  = (100,10**50,125)          # lenses configuration 1
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**50,150)          # lenses configuration 2
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+print(w_out*10**3)
+(f1,f2,f3)  = (100,10**50,200)          # lenses configuration 3
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+print(w_out*10**3)
+
+axs.set_ylim([0,5.5])
 axs.legend().remove
-axs.set_xlim(399.8,400.2)
-axs.annotate("$w_{0,ideal}$",[400,w_out/(MS**0.5)],[400.025,w_out/(MS**0.5)],arrowprops=dict(facecolor='black', shrink=0.005))
-axs.annotate("$w_{0,ideal}\\cdot M$",[400,w_out],[400.025,w_out],arrowprops=dict(facecolor='black', shrink=0.005))
+
+legend_elements = [Line2D([0], [0], color='#1f77b4', label='$f_3=125$, laser 1'),
+                   Line2D([0], [0], color='#ff7f0e', label='$f_3=150$, laser 1'),
+                   Line2D([0], [0], color='#2ca02c', label='$f_3=200$, laser 1'),
+                   Line2D([0], [0], color='#d62728', label='$f_3=125$, laser 2'),
+                   Line2D([0], [0], color='#9467bd', label='$f_3=150$, laser 2'),
+                   Line2D([0], [0], color='#8c564b', label='$f_3=200$, laser 2')]
+axs.legend(handles=legend_elements, loc='upper right')
+
+axs.set_xlim(315,410)
+axs.set_ylim(0,0.4)
 
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment3/fig6.tex',axis_width='0.9\\textwidth',axis_height ='7cm')

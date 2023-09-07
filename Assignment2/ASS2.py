@@ -32,7 +32,7 @@ def isNotebook() -> bool:
 def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1,zmin=None,zmax=None):
     # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
     # parameters:
-    #   lam0        wavelength considered                           [mm]
+    #   lam0        wavelength considered                           [m]
     #   w0          initial beam waist                              [mm]
     #   d0          from initial waist to first thin lens           [mm]
     #   d1          between first and second thin lenses            [mm]
