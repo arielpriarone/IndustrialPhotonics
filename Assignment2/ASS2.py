@@ -61,7 +61,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     th0     =   lam0/np.pi/w0                   # divergence at the left of the first lens
     M       =   MS**0.5                         # sqrt of quality factor
     
-    M1      =   -f1/((d0-f1)**2+zr0**2)**0.5    # magnification first lens (- to keep it positive)
+    M1      =   f1/((d0-f1)**2+zr0**2)**0.5     # magnification first lens
+    M1      =   abs(M1)
     w1      =   M1*w0                           # weist of second beam
     zr1     =   zr0*M1**2                       # Rayleigh range right first lens
     th1     =   th0/M1                          # Divergence right first lens
@@ -72,7 +73,8 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     s1I     =   d0                              # distance from first lens and waist (on the left)
     s1II    =   f1+M1**2*(s1I-f1)               # distance from first lens and waist (on the right)
     S2I     =   (d1-s1II)                       # distance from second lens and waist (on the left)
-    M2      =   f2/((S2I-f2)**2+zr1**2)**0.5     # magnification second lens
+    M2      =   f2/((S2I-f2)**2+zr1**2)**0.5    # magnification second lens
+    M2      =   abs(M2)
     w2      =   M2*w1                           # weist of third beam
     zr2     =   zr1*M2**2                       # Rayleigh range right second lens
     th2     =   th1/M2                          # Divergence right second lens
@@ -83,6 +85,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     s2II    =   f2+M2**2*(S2I-f2)               # distance from second lens and waist (on the right)
     S3I     =   (d2-s2II)                       # distance from third lens and waist (on the left)
     M3      =   f3/((S3I-f3)**2+zr2**2)**0.5    # magnification third lens
+    M3      =   abs(M3)
     w3      =   M3*w2                           # weist of third beam
     zr3     =   zr2*M3**2                       # Rayleigh range right second lens
     th3     =   th2/M3                          # Divergence right second lens
@@ -93,7 +96,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
     w       =   []                              # initialize beam radius along z
     w_r     =   []                              # this will be the real beam (not gaussian)
 
-    S3II    =   f3+M3**2*(S3I-f3)                # location of output waist w.r.t. last lens (if negative diverges already from lens position)
+    S3II    =   f3+M3**2*(S3I-f3)               # location of output waist w.r.t. last lens
     for z in z_vect:
         if      0<=z<d0:
             q   = q0+(z-0)                  # propagate q to z position
@@ -114,7 +117,7 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
             q   = q3plus+(z-L2)             # propagate q to z position
             aux = 1/q                       # auxilliary for radius calculation
             w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
-            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis
+            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis (if negative, the beam is already diverging)
         ymax=max(w)*1.1;    ymin=-0
     xmin=0.75*d0; xmax=L2+2*f3
     if plot:                                    # plot if needed, skip if not

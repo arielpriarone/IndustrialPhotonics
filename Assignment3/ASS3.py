@@ -28,7 +28,7 @@ def isNotebook() -> bool:
     except NameError:
         return False      # Probably standard Python interpreter
 
-def mlayer(n,L,lam0,theta=0,pol='TE'):
+def mLayerReflectivity(n,L,lam0,theta=0,pol='TE'):
     # compute the input reflectivity for a multilayer stack of materials (first and last mediums infinetely thick)
     # imputs:
     #   n     : array-like,       array of reflactive indeces (constant, no chromatic aberration considered)
@@ -101,7 +101,113 @@ def isNotebook() -> bool:
         else:
             return False  # Other type (?)
     except NameError:
-        return False      # Probably standard Python interpreter   
+        return False      # Probably standard Python interpreter 
+
+def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=True,MS=1):
+    # this function aim to produce a plot of a gausiann beam that passes thru three thin lenses, the approach used is tho compute the complex beam parameter q and propagate that thru air and lenses, then compute the radius and show a plot
+    # parameters:
+    #   lam0        wavelength considered                           [mm]
+    #   w0          initial beam waist                              [mm]
+    #   d0          from initial waist to first thin lens           [mm]
+    #   d1          between first and second thin lenses            [mm]
+    #   d2          between second and third thin lenses            [mm]
+    #   f1          focal length first lens                         [mm]
+    #   f2          focal length first lens                         [mm]
+    #   f3          focal length first lens                         [mm]
+    #   npoint      number of points of the plot (resolution)       [--]
+    #   fig=None    figure handle
+    #   axs=None    axis handle
+    #   plot=True   T=generate plot; F=generate only the data
+    #   Ms          quality factor of the beam (ref slide 05/177)   [--]
+    # returns:
+    #   fig         figure handle of the plot
+    #   axs         axis handle of the plot
+    #   M           overall magnification of the system             [--]
+    #   d3 (s3II)   location of the output waist w.r.t. last lens   [mm]
+    #   th3*10**5   angle of output beam *10^5                      [mrad*100]
+    #   w3          output waist (real beam)                        [mm]
+    #   w_end       beam radius at the end of the system (real beam)[mm]
+    
+    L1      =   d0+d1                           # second length position
+    L2      =   d0+d1+d2                        # third length position
+    zr0     =   np.pi*w0**2/lam0                # Rayleigh range
+    q0      =   1j*zr0                          # complex beam parameter
+    th0     =   lam0/np.pi/w0                   # divergence at the left of the first lens
+    M       =   MS**0.5                         # sqrt of quality factor
+    
+    M1      =   f1/((d0-f1)**2+zr0**2)**0.5     # magnification first lens
+    M1      =   abs(M1)
+    w1      =   M1*w0                           # weist of second beam
+    zr1     =   zr0*M1**2                       # Rayleigh range right first lens
+    th1     =   th0/M1                          # Divergence right first lens
+    q1minus =   q0+d0                           # propagate left side first lens
+    A,B,C,D =   (1,0,-1/f1,1)                   # matrix entries of first lens
+    q1plus  =   (A*q1minus+B)/(C*q1minus+D)     # propagate right side first lens
+    
+    s1I     =   d0                              # distance from first lens and waist (on the left)
+    s1II    =   f1+M1**2*(s1I-f1)               # distance from first lens and waist (on the right)
+    S2I     =   (d1-s1II)                       # distance from second lens and waist (on the left)
+    M2      =   f2/((S2I-f2)**2+zr1**2)**0.5    # magnification second lens
+    M2      =   abs(M2)
+    w2      =   M2*w1                           # weist of third beam
+    zr2     =   zr1*M2**2                       # Rayleigh range right second lens
+    th2     =   th1/M2                          # Divergence right second lens
+    q2minus =   q1plus+d1                       # propagate left side second lens
+    A,B,C,D =   (1,0,-1/f2,1)                   # matrix entries of second lens
+    q2plus  =   (A*q2minus+B)/(C*q2minus+D)     # propagate right side second lens
+    
+    s2II    =   f2+M2**2*(S2I-f2)               # distance from second lens and waist (on the right)
+    S3I     =   (d2-s2II)                       # distance from third lens and waist (on the left)
+    M3      =   f3/((S3I-f3)**2+zr2**2)**0.5    # magnification third lens
+    M3      =   abs(M3)
+    w3      =   M3*w2                           # weist of third beam
+    zr3     =   zr2*M3**2                       # Rayleigh range right second lens
+    th3     =   th2/M3                          # Divergence right second lens
+    q3minus =   q2plus+d2                       # propagate left side third lens
+    A,B,C,D =   (1,0,-1/f3,1)                   # matrix entries of third lens
+    q3plus  =   (A*q3minus+B)/(C*q3minus+D)     # propagate right side third lens
+    z_vect  =   np.linspace(0,L2+2*f3,npoint)   # points of z axis
+    w       =   []                              # initialize beam radius along z
+    w_r     =   []                              # this will be the real beam (not gaussian)
+
+    S3II    =   f3+M3**2*(S3I-f3)               # location of output waist w.r.t. last lens
+    for z in z_vect:
+        if      0<=z<d0:
+            q   = q0+(z-0)                  # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+            w_r.append(M*w0*(1+((lam0*z)/(np.pi*w0**2))**2)**0.5)           # real beam radius along z axis
+        elif    d0<=z<L1:
+            q   = q1plus+(z-d0)             # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+            w_r.append(M*w1*(1+((lam0*(z-d0-s1II))/(np.pi*w1**2))**2)**0.5)  # real beam radius along z axis
+        elif    L1<=z<L2:
+            q   = q2plus+(z-L1)             # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+            w_r.append(M*w2*(1+((lam0*(z-L1-s2II))/(np.pi*w2**2))**2)**0.5)  # real beam radius along z axis
+        elif    L2<=z:
+            q   = q3plus+(z-L2)             # propagate q to z position
+            aux = 1/q                       # auxilliary for radius calculation
+            w.append((-lam0/(np.pi*aux.imag))**0.5)  # beam radius along z axis
+            w_r.append(M*w3*(1+((lam0*(z-L2-S3II))/(np.pi*w3**2))**2)**0.5)  # real beam radius along z axis (if negative, the beam is already diverging)
+        ymax=max(w)*1.1;    ymin=-0
+    xmin=0.75*d0; xmax=L2+2*f3
+    if plot:                                    # plot if needed, skip if not
+        if fig == None or axs == None:
+            fig, axs=plt.subplots()
+        fig.tight_layout()
+        axs.plot(z_vect,w,label=f'$d_1={d1}$; $d_2={d2}$')
+        if (MS > 1):
+            axs.fill_between(z_vect, w_r, w, alpha=0.2) # if it's a gaussian beam, no need to plot the shade
+        axs.set_xlabel('$z$ [mm]')
+        axs.set_ylabel('beam radius [mm]')
+        axs.set_ylim([ymin,ymax]); axs.set_xlim([xmin,xmax])
+        axs.vlines([d0, L1, L2],ymin,ymax,linestyles="dashdot",color="magenta")
+        axs.grid(True, 'major')
+        axs.legend()
+    return fig, axs, M1*M2*M3, S3II, th3*10**5, w3*M, w_r[-1]
 
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
@@ -158,8 +264,8 @@ d=np.tile([dH, dL],ncouples)    # concatenate bilayers thicknesses
 n=np.concatenate(([nair],n))    # add air medium
 n=np.concatenate((n,[ng]))      # add glass medium
 
-Rtm=mlayer(n,d,lam,theta,'TM')  # tm polarization reflectivity
-Rte=mlayer(n,d,lam,theta,'TE')  # te polarization reflectivity
+Rtm=mLayerReflectivity(n,d,lam,theta,'TM')  # tm polarization reflectivity
+Rte=mLayerReflectivity(n,d,lam,theta,'TE')  # te polarization reflectivity
 
 # axs.plot(lam,(Rte),label=f'$TE$')
 # axs.plot(lam,(Rtm),label=f'$TM$')
@@ -182,8 +288,8 @@ lam     =   np.linspace(380,700,1000)*10**(-9) # visible range
 fig, axs=plt.subplots()
 fig.tight_layout()
 
-Rtm=mlayer(n,d,lam,theta,'TM')  # tm polarization reflectivity
-Rte=mlayer(n,d,lam,theta,'TE')  # te polarization reflectivity
+Rtm=mLayerReflectivity(n,d,lam,theta,'TM')  # tm polarization reflectivity
+Rte=mLayerReflectivity(n,d,lam,theta,'TE')  # te polarization reflectivity
 
 # axs.plot(lam,(Rte),label=f'$TE$')
 # axs.plot(lam,(Rtm),label=f'$TM$')
@@ -235,5 +341,13 @@ tikzplotlib_fix_ncols(fig)
 tikzplotlib.save('Assignment3/fig4.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
+
+# %% study the first laser with three heads
+w0  =   14/2/10**6                      # approximate the waist with the core radius [um]
+MS  =   1.2                             # quality factor
+(d0,d1,d2)  = (100,10,10)               # spacing configuration
+(f1,f2,f3)  = (100,float('inf'),125)    # lenses configuration
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,MS=MS)
+
+
 plt.show()
-# %%
