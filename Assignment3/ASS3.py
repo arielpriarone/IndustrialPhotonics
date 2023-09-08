@@ -443,13 +443,13 @@ corr=100/14*(MS**0.5/1.2**0.5)          # correction factor for both the wors qu
 (d0,d1,d2)  = (100*corr,0,100)               # spacing configuration
 
 (f1,f2,f3)  = (100*corr,10**50,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS)
 print(w_out*10**3)
 (f1,f2,f3)  = (100*corr,10**50,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
 (f1,f2,f3)  = (100*corr,10**50,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=1001,MS=MS,fig=fig,axs=axs)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs)
 print(w_out*10**3)
 axs.set_ylim(0,70)
 axs.legend(loc='upper left')
@@ -459,20 +459,20 @@ tikzplotlib.save('Assignment3/fig7.tex',axis_width='0.9\\textwidth',axis_height 
 
 # detailed view
 (f1,f2,f3)  = (100*corr,10**50,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=900,MS=MS,zmin=2720,zmax=2820)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,zmin=2720,zmax=2820)
 print(w_out*10**3)
 (f1,f2,f3)  = (100*corr,10**50,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=900,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
 print(w_out*10**3)
 (f1,f2,f3)  = (100*corr,10**50,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=900,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
 print(w_out*10**3)
 
 axs.set_xlim(2720,2820)
-axs.set_ylim(0,0.4)
+axs.set_ylim(0,4)
 
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment3/fig6.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save('Assignment3/fig8.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 plt.show()
