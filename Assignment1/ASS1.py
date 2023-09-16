@@ -31,7 +31,9 @@ def isNotebook() -> bool:
     
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
-
+    path='../'
+else:
+    path=''
 
 # %% compute the reflectivity 
 n_si=3.8    # refraction coefficient of silicon
@@ -3381,7 +3383,12 @@ axs.semilogx(AM15_lambda,AM15_irr)
 axs.set_xlabel('$\lambda$ [nm]')
 axs.set_ylabel('Irradiance [${W}/{(m^2\cdot nm)}$]')
 axs.grid(True,'both')
-tikzplotlib.save('Assignment1/irradiance.tex',axis_width='0.9\\textwidth',axis_height ='6cm')
+tikzplotlib.save(path+'Assignment1/irradiance.tex',axis_width='0.9\\textwidth',axis_height ='6cm')
+
+# center of mass, since both positive, we can use norm1
+com=(np.dot(AM15_irr,AM15_lambda))/np.linalg.norm(AM15_irr,1)                           #  center of "mass"
+
+
 
 # %% sLARC design
 lambda0=495 # design wavelength [nm]
@@ -3423,7 +3430,7 @@ axs.grid(True,'both')
 axs.minorticks_on()
 axs.legend(['ideal $n=1.9493$', '$Al_2O_3 \, n=1.7747$', '$Si_3N_4 \, n=2.0647$', '$SiO_2 \, n=1.4626$', '$TiO_2 \, n=2.7193$'])
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/SLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment1/SLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 # %% compute the chromatic dispersion
@@ -3445,7 +3452,7 @@ axs.grid(True,'both')
 axs.minorticks_on()
 axs.legend(['ideal', '$Al_2O_3$', '$Si_3N_4$', '$SiO_2$', '$TiO_2$'])
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/n_dispersion.tex',axis_width='0.9\\textwidth',axis_height ='5cm')
+tikzplotlib.save(path+'Assignment1/n_dispersion.tex',axis_width='0.9\\textwidth',axis_height ='5cm')
 
 # %% check reflectivity - with dispersion
 fig, axs=plt.subplots()
@@ -3471,7 +3478,7 @@ axs.grid(True,'both')
 axs.minorticks_on()
 axs.legend(['ideal', '$Al_2O_3$', '$Si_3N_4$', '$SiO_2$', '$TiO_2$'])
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/SLARC_n_vary.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment1/SLARC_n_vary.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% DL ARC - some n
 n_dict={"$Na_3AlF_6$": 1.35,
@@ -3520,7 +3527,7 @@ axs.set_ylabel('$n_1/n_2$')
 axs.grid(True,'both')
 axs.legend(['available ratios', 'reference'])
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/DLARC_ratios.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment1/DLARC_ratios.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% DLARC - my design
 d_Ge=lambda0/4/n_dict['$Ge$']
@@ -3554,7 +3561,7 @@ axs.grid(True,'both')
 axs.minorticks_on()
 axs.legend(['DLARC $TiO2 \,/\, SiO2$','DLARC $Ta_2O_5 \,/\, Ge$','SLARC $Si_3N_4$'])
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/DLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment1/DLARC.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% check effective reflectivity
 indx=0
@@ -3614,7 +3621,7 @@ axs.set_ylabel('Reflectivity [%]')
 axs.grid(True,'both')
 axs.legend(legend,loc='lower right')
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/DLARC_tol.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment1/DLARC_tol.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% DLARC - tolerance effect
 Z_inf_SiO2=Z0/n_dict['$SiO_2$']
@@ -3645,7 +3652,7 @@ axs.set_ylabel('Reflectivity [%]')
 axs.grid(True,'both')
 axs.legend(legend,loc='lower right')
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment1/DLARC_tol.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment1/DLARC_tol.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %%
 plt.show()

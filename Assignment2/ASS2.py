@@ -143,6 +143,9 @@ def BeamExpander(lam0,w0,d0,d1,d2,f1,f2,f3,npoint=1000,fig=None,axs=None,plot=Tr
 
 if isNotebook(): # run widget only if in interactive mode
     get_ipython().run_line_magic('matplotlib', 'widget')
+    path='../'
+else:
+    path=''
 
 # %% check result for all the row of the table
 table=[(10,120.006),
@@ -156,7 +159,7 @@ for (d1,d2) in table:
     print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment2/PLOT.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment2/PLOT.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% check linearity
 fig, axs=plt.subplots()
@@ -175,7 +178,7 @@ axs.grid(True, 'Both')
 axs.legend()
 
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment2/dvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment2/dvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 # %% check linearity - envelope
@@ -200,7 +203,7 @@ axs.grid(True, 'Both')
 axs.legend(ncol=4)
 
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment2/LinApprox.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment2/LinApprox.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% check linearity - definition with useful beam radius
 fig, axs=plt.subplots()
@@ -219,7 +222,7 @@ axs.set_ylabel('$\\frac{w(z=L_2+2\\cdot f_3)}{w_0}$ [-]')
 axs.grid(True, 'Both')
 axs.legend()
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment2/Woutvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment2/Woutvsm.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %% check result for all the row of the table
 table=[(10,120.006),
@@ -233,7 +236,7 @@ for (d1,d2) in table:
     print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment2/AssArrangment.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment2/AssArrangment.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 
 # %% try to optimize oyher expander
@@ -248,7 +251,7 @@ for (d1,d2) in table:
     print(f'Mg={Mg}; dout={dout}; thout={thout}; wout={wout}')
 
 tikzplotlib_fix_ncols(fig)
-tikzplotlib.save('Assignment2/Mydesign.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+tikzplotlib.save(path+'Assignment2/Mydesign.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
 
 # %%
 plt.show()
