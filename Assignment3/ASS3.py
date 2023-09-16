@@ -219,7 +219,7 @@ ng      =   1.5                         # right medim refr index (glass)
 dH      =   lam0/4/nH                   # thickness layer H
 dL      =   lam0/4/nL                   # thickness layer L
 
-lam     =   np.linspace(lam0*0.80,lam0*1.2,1000)
+lam     =   np.linspace(lam0*0.80,lam0*1.2,2000)
 
 fig, axs=plt.subplots(3, 1, sharex=True, sharey=True)
 fig.tight_layout()
@@ -253,7 +253,7 @@ dH      =   lam0_c/4/nH                 # thickness layer H
 dL      =   lam0_c/4/nL                 # thickness layer L
 ncouples =  80                          # how many bilayers
 theta   =   45                          # AOU - degrees
-lam     =   np.linspace(lam0*0.9,lam0*1.1,1000) # around laser wavelength
+lam     =   np.linspace(lam0*0.9,lam0*1.1,2000) # around laser wavelength
 
 fig, axs=plt.subplots()
 fig.tight_layout()
@@ -281,7 +281,7 @@ tikzplotlib.save(path+'Assignment3/fig2.tex',axis_width='0.9\\textwidth',axis_he
 
 # %% check reflectivity in visible range
 # data of the problem
-lam     =   np.linspace(380,700,1000)*10**(-9) # visible range
+lam     =   np.linspace(380,700,2000)*10**(-9) # visible range
 
 fig, axs=plt.subplots()
 fig.tight_layout()
@@ -403,13 +403,13 @@ a   =   7*10**-6                        # radius of the fiber core
 w0  =   BPP/np.arcsin(V*lam0/(2*np.pi*a))*10**3 # beam waist at the fiber output [mm]
 
 (f1,f2,f3)  = (100,10**50,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,zmin=315,zmax=410)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,zmin=315,zmax=410)
 print(w_out)
 (f1,f2,f3)  = (100,10**50,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
 print(w_out)
 (f1,f2,f3)  = (100,10**50,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
 print(w_out)
 
 # second laser
@@ -420,13 +420,13 @@ a   =   50*10**-6                       # radius of the fiber core
 w0  =   BPP/np.arcsin(V*lam0/(2*np.pi*a))*10**3 # beam waist at the fiber output [mm]
 
 (f1,f2,f3)  = (100,10**50,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
 print(w_out)
 (f1,f2,f3)  = (100,10**50,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
 print(w_out)
 (f1,f2,f3)  = (100,10**50,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=200,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=315,zmax=410)
 print(w_out)
 
 axs.set_ylim([0,5.5])
@@ -458,13 +458,13 @@ corr=100/14*(MS**0.5/1.2**0.5)          # correction factor for both the wors qu
 (d0,d1,d2)  = (100*corr,0,100)               # spacing configuration
 
 (f1,f2,f3)  = (100*corr,10**50,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS)
 print(w_out)
 (f1,f2,f3)  = (100*corr,10**50,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs)
 print(w_out)
 (f1,f2,f3)  = (100*corr,10**50,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs)
 print(w_out)
 axs.set_ylim(0,70)
 axs.legend(loc='upper left')
@@ -474,13 +474,13 @@ tikzplotlib.save(path+'Assignment3/fig7.tex',axis_width='0.9\\textwidth',axis_he
 
 # detailed view
 (f1,f2,f3)  = (100*corr,10**50,125)          # lenses configuration 1
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,zmin=2720,zmax=2820)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,zmin=2720,zmax=2820)
 print(w_out)
 (f1,f2,f3)  = (100*corr,10**50,150)          # lenses configuration 2
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
 print(w_out)
 (f1,f2,f3)  = (100*corr,10**50,200)          # lenses configuration 3
-fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=300,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
+fig, axs, Mag, d3, div, w_out, w_end = BeamExpander(lam0*10**3,w0,d0,d1,d2,f1,f2,f3,npoint=800,MS=MS,fig=fig,axs=axs,zmin=2720,zmax=2820)
 print(w_out)
 
 axs.set_xlim(2720,2820)
