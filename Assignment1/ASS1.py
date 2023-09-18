@@ -3612,7 +3612,7 @@ for err1 in [-0.02, 0.02]:
         Gaminus=(Za-Z0)/(Za+Z0)
         R_DLARC_tolerance=np.abs(Gaminus)**2*100
         axs.plot(lambdas,R_DLARC_tolerance)
-        legend.append('$TiO_2$ ('+str(err1)+'\%), $SiO_2$ ('+str(err2)+'\%)')
+        legend.append('$TiO_2$ ('+str(err1*100)+'\%), $SiO_2$ ('+str(err2)+'\%)')
 axs.plot(lambdas,R_DLARC_SiO2TiO2)
 legend.append('$TiO_2$, $SiO_2$ nominal tickness')
 axs.minorticks_on()
@@ -3643,7 +3643,7 @@ for err1 in np.linspace(-0.02,0.02,50):
         Gaminus=(Za-Z0)/(Za+Z0)
         R_DLARC_tolerance=np.abs(Gaminus)**2*100
         axs.plot(lambdas,R_DLARC_tolerance,'gray')
-        #legend.append('$TiO_2$ ('+str(err1)+'%), $SiO_2$ ('+str(err2)+'%)')
+        #legend.append('$TiO_2$ ('+str(err1*100)+'%), $SiO_2$ ('+str(err2)+'%)')
 axs.plot(lambdas,R_DLARC_SiO2TiO2)
 legend.append('$TiO_2$, $SiO_2$ nominal tickness')
 axs.minorticks_on()
@@ -3653,6 +3653,34 @@ axs.grid(True,'both')
 axs.legend(legend,loc='lower right')
 tikzplotlib_fix_ncols(fig)
 tikzplotlib.save(path+'Assignment1/DLARC_tol.tex',axis_width='0.9\\textwidth',axis_height ='7cm')
+
+
+# %% DLARC - tolerance effect EFFECTIVE
+Gcminus=(Z_inf_Si-Z_inf_TiO2)/(Z_inf_Si+Z_inf_TiO2)
+k=K0*n_dict['$TiO_2$']
+R_eff=[]; R_min=[]
+for err1 in [-0.02, 0.02]:
+    for err2 in [-0.02, 0.02]:
+        Gbplus=Gcminus*np.exp(-2j*k*d_TiO2*(1-err1))
+        Zb=Z_inf_TiO2*(1+Gbplus)/(1-Gbplus)
+        Gbminus=(Zb-Z_inf_SiO2)/(Zb+Z_inf_SiO2)
+        k=K0*n_dict['$SiO_2$']
+        Gaplus=Gbminus*np.exp(-2j*k*d_SiO2*(1-err2))
+        Za=Z_inf_SiO2*(1+Gaplus)/(1-Gaplus)
+        Gaminus=(Za-Z0)/(Za+Z0)
+        R_DLARC_tolerance=np.abs(Gaminus)**2*100
+
+        NUM=0; DEN=0
+        R = R_DLARC_tolerance
+        for _ in lambdas:
+            if indx is (len(lambdas)-2):
+                break
+            NUM+=R[indx]*AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+            DEN+=AM15_irr[indx]*(lambdas[indx+1]-lambdas[indx])
+        R_eff.append(NUM/DEN)
+        R_min.append(np.min(R))
+
+print(np.round(R_eff,2)); print(np.round(R_min,2))
 
 # %%
 plt.show()
